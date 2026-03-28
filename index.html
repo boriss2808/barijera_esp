@@ -3,72 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barijera</title>
-    <script src="https://unpkg.com"></script>
+    <title>Barijera App</title>
+    <script src="https://cdnjs.cloudflare.com"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
+        body { font-family: -apple-system, sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
         .card { background: #1e1e1e; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: inline-block; width: 85%; max-width: 350px; }
         #status { font-size: 1.2em; margin-bottom: 25px; color: #f1c40f; font-weight: bold; min-height: 1.5em; }
         .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; background: #34495e; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        .btn-ready { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); }
-        .btn:active { transform: scale(0.95); }
+        .btn-active { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); }
+        .btn-down { background: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.4); }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>🚗 Barijera</h2>
+        <h2>🚗 BARIJERA</h2>
         <div id="status">Povezivanje...</div>
         <button id="mainBtn" class="btn" onclick="sendAction()">START</button>
     </div>
 
     <script>
-        // --- ISPRAVLJENE POSTAVKE ZA SHIFTR.IO WEB ---
-        const options = {
+        // --- ISPRAVLJENE POSTAVKE S NOVOM LOZINKOM ---
+        const BROKER = 'wss://barijera.cloud.shiftr.io:443/mqtt';
+        const OPTIONS = {
             username: 'barijera',
-            password: 'a65EJswlw1IfaJ15',
-            clientId: 'web_' + Math.random().toString(16).slice(2, 8),
-            keepalive: 60,
-            clean: true,
-            reconnectPeriod: 1000
+            password: '_RFp!dhH59r;B=', // Tvoja nova lozinka
+            clientId: 'web_client_' + Math.random().toString(16).slice(2, 8)
         };
 
-        // Shiftr.io WSS adresa s portom 443 i putanjom /mqtt
-        const client = mqtt.connect('wss://barijera.cloud.shiftr.io:443/mqtt', options);
-
+        const client = mqtt.connect(BROKER, OPTIONS);
         const statusEl = document.getElementById('status');
         const btnEl = document.getElementById('mainBtn');
 
         client.on('connect', () => {
-            console.log("Spojen na Shiftr.io!");
+            console.log("Spojeno na Shiftr!");
             statusEl.innerText = "Sustav Online";
             statusEl.style.color = "#2ecc71";
-            btnEl.classList.add('btn-ready');
-            // Slušamo status koji šalje ESP32
             client.subscribe('barijera/sensor/status_barijere/state');
         });
 
         client.on('message', (topic, message) => {
-            statusEl.innerText = message.toString();
+            const msg = message.toString();
+            statusEl.innerText = msg;
+            
+            if (msg.includes("SPUŠTENA")) {
+                btnEl.className = "btn btn-active";
+                btnEl.innerText = "PODIGNI";
+            } else if (msg.includes("PODIGNUTA")) {
+                btnEl.className = "btn btn-down";
+                btnEl.innerText = "SPUSTI";
+            }
         });
 
         client.on('error', (err) => {
-            statusEl.innerText = "Greška u vezi!";
-            statusEl.style.color = "#e74c3c";
-            console.log(err);
-        });
-
-        client.on('close', () => {
-            statusEl.innerText = "Veza prekinuta";
-            statusEl.style.color = "#e74c3c";
-            btnEl.classList.remove('btn-ready');
+            statusEl.innerText = "Greška u prijavi!";
+            console.error(err);
         });
 
         function sendAction() {
             if (client.connected) {
                 client.publish('barijera/komanda', 'OTVORI');
-                console.log("Naredba poslana!");
-            } else {
-                alert("Pričekajte povezivanje...");
+                console.log("Naredba OTVORI poslana!");
             }
         }
     </script>
