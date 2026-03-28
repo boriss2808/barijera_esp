@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barijera App</title>
-    <!-- Provjerena MQTT biblioteka s drugog izvora -->
-    <script src="https://cdn.jsdelivr.net"></script>
+    <!-- Koristimo najpouzdaniji CDN za MQTT -->
+    <script src="https://cdnjs.cloudflare.com"></script>
     <style>
         body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
         .card { background: #1e1e1e; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: inline-block; width: 85%; max-width: 350px; }
@@ -21,7 +21,7 @@
         <h2>🚗 BARIJERA</h2>
         <div id="status">POVEZIVANJE...</div>
         <button id="mainBtn" class="btn" onclick="sendAction()">START</button>
-        <div id="debug">Sustav se pokreće...</div>
+        <div id="debug">Status: Čekam Shiftr...</div>
     </div>
 
     <script>
@@ -29,56 +29,44 @@
         const debugEl = document.getElementById('debug');
         const btnEl = document.getElementById('mainBtn');
 
-        try {
-            // --- KONFIGURACIJA ---
-            // Shiftr.io zahtijeva wss:// (Secure WebSocket) preko GitHub Pages
-            const BROKER = 'wss://esp32esp32.cloud.shiftr.io';
-            const OPTIONS = {
-                port: 443,
-                path: '/mqtt',
-                username: 'esp32esp32',
-                password: 'Tg7bLYU0Z7d6z78Z',
-                clientId: 'web_' + Math.random().toString(16).slice(2, 10),
-                connectTimeout: 5000
-            };
+        // Shiftr.io WSS format sa lozinkom u URL-u (najpouzdanije za browser)
+        const broker = 'wss://esp32esp32:Tg7bLYU0Z7d6z78Z@esp32esp32.cloud.shiftr.io';
 
-            debugEl.innerText = "Spajanje na: " + BROKER;
-            const client = mqtt.connect(BROKER, OPTIONS);
+        const client = mqtt.connect(broker, {
+            clientId: 'web_' + Math.random().toString(16).slice(2, 8),
+            rejectUnauthorized: false // Ignoriraj certifikat ako browser zeza
+        });
 
-            client.on('connect', () => {
-                statusEl.innerText = "SUSTAV ONLINE";
-                statusEl.style.color = "#2ecc71";
-                debugEl.innerText = "Povezano na Shiftr.io!";
-                client.subscribe('barijera/sensor/status_barijere/state');
-            });
+        client.on('connect', () => {
+            statusEl.innerText = "SUSTAV ONLINE";
+            statusEl.style.color = "#2ecc71";
+            debugEl.innerText = "Spojen na Cloud!";
+            client.subscribe('barijera/sensor/status_barijere/state');
+        });
 
-            client.on('message', (topic, message) => {
-                const msg = message.toString();
-                statusEl.innerText = msg;
-                if (msg.includes("SPUŠTENA")) {
-                    btnEl.className = "btn btn-active";
-                    btnEl.innerText = "PODIGNI";
-                } else if (msg.includes("PODIGNUTA")) {
-                    btnEl.className = "btn btn-down";
-                    btnEl.innerText = "SPUSTI";
-                }
-            });
+        client.on('message', (topic, message) => {
+            const msg = message.toString();
+            statusEl.innerText = msg;
+            if (msg.includes("SPUŠTENA")) {
+                btnEl.className = "btn btn-active";
+                btnEl.innerText = "PODIGNI";
+            } else if (msg.includes("PODIGNUTA")) {
+                btnEl.className = "btn btn-down";
+                btnEl.innerText = "SPUSTI";
+            }
+        });
 
-            client.on('error', (err) => {
-                debugEl.innerText = "Greška: " + err;
-            });
+        client.on('error', (err) => {
+            debugEl.innerText = "Greška: " + err;
+        });
 
-            window.sendAction = function() {
-                if (client.connected) {
-                    client.publish('barijera/komanda', 'OTVORI');
-                    debugEl.innerText = "Naredba OTVORI poslana!";
-                } else {
-                    alert("Čekam vezu...");
-                }
-            };
-
-        } catch (e) {
-            debugEl.innerText = "Kritična greška: " + e.message;
+        function sendAction() {
+            if (client.connected) {
+                client.publish('barijera/komanda', 'OTVORI');
+                debugEl.innerText = "Naredba poslana!";
+            } else {
+                alert("Nema veze s oblakom!");
+            }
         }
     </script>
 </body>
