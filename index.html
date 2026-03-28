@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barijera App</title>
-    <!-- MQTT biblioteka direktno s provjerenog izvora -->
+    <!-- Koristimo najnoviju stabilnu MQTT biblioteku -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; margin: 0; }
@@ -21,7 +21,7 @@
         <h2>🚗 BARIJERA</h2>
         <div id="status">POVEZIVANJE...</div>
         <button id="mainBtn" class="btn" onclick="sendAction()">START</button>
-        <div id="debug">Status: Čekam vezu...</div>
+        <div id="debug">Status: Čekam Cloud...</div>
     </div>
 
     <script>
@@ -29,26 +29,21 @@
         const debugEl = document.getElementById('debug');
         const btnEl = document.getElementById('mainBtn');
 
-        // Shiftr.io postavke - eksplicitno definirane
-        const options = {
-            protocol: 'wss',
-            hostname: 'esp32esp32.cloud.shiftr.io',
-            port: 443,
-            path: '/mqtt',
-            username: 'esp32esp32',
-            password: 'Tg7bLYU0Z7d6z78Z',
+        // Shiftr.io WSS format koji direktno definira putanju /mqtt
+        const BROKER_URL = 'wss://esp32esp32:Tg7bLYU0Z7d6z78Z@esp32esp32.cloud.shiftr.io/mqtt';
+
+        debugEl.innerText = "Spajanje na Shiftr...";
+
+        const client = mqtt.connect(BROKER_URL, {
             clientId: 'web_' + Math.random().toString(16).slice(2, 8)
-        };
-
-        debugEl.innerText = "Pokušavam se spojiti na WSS...";
-
-        const client = mqtt.connect(options);
+        });
 
         client.on('connect', () => {
             console.log("Spojen na Shiftr!");
             statusEl.innerText = "SUSTAV ONLINE";
             statusEl.style.color = "#2ecc71";
-            debugEl.innerText = "Sustav je spojen na Cloud!";
+            debugEl.innerText = "Povezano! Čekam status barijere...";
+            // Slušamo točan topic koji šalje tvoj ESP32
             client.subscribe('barijera/sensor/status_barijere/state');
         });
 
@@ -65,14 +60,14 @@
         });
 
         client.on('error', (err) => {
-            debugEl.innerText = "Greška: " + err;
+            debugEl.innerText = "Greška: " + err.message;
             console.error(err);
         });
 
         function sendAction() {
             if (client.connected) {
                 client.publish('barijera/komanda', 'OTVORI');
-                debugEl.innerText = "Naredba poslana!";
+                debugEl.innerText = "Naredba poslana u " + new Date().toLocaleTimeString();
             } else {
                 alert("Nema veze s oblakom!");
             }
