@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barijera App</title>
-    <!-- Koristimo najpouzdaniji CDN za MQTT -->
-    <script src="https://cdnjs.cloudflare.com"></script>
+    <!-- MQTT biblioteka direktno s provjerenog izvora -->
+    <script src="https://unpkg.com"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
+        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; margin: 0; }
         .card { background: #1e1e1e; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: inline-block; width: 85%; max-width: 350px; }
-        #status { font-size: 1.2em; margin-bottom: 25px; color: #f1c40f; font-weight: bold; }
-        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; background: #34495e; }
+        #status { font-size: 1.2em; margin-bottom: 25px; color: #f1c40f; font-weight: bold; min-height: 1.5em; }
+        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; background: #34495e; box-shadow: 0 10px 20px rgba(0,0,0,0.4); outline: none; }
         .btn-active { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); }
         .btn-down { background: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.4); }
         #debug { margin-top: 20px; font-size: 0.8em; color: #555; }
@@ -21,7 +21,7 @@
         <h2>🚗 BARIJERA</h2>
         <div id="status">POVEZIVANJE...</div>
         <button id="mainBtn" class="btn" onclick="sendAction()">START</button>
-        <div id="debug">Status: Čekam Shiftr...</div>
+        <div id="debug">Status: Čekam vezu...</div>
     </div>
 
     <script>
@@ -29,18 +29,26 @@
         const debugEl = document.getElementById('debug');
         const btnEl = document.getElementById('mainBtn');
 
-        // Shiftr.io WSS format sa lozinkom u URL-u (najpouzdanije za browser)
-        const broker = 'wss://esp32esp32:Tg7bLYU0Z7d6z78Z@esp32esp32.cloud.shiftr.io';
+        // Shiftr.io postavke - eksplicitno definirane
+        const options = {
+            protocol: 'wss',
+            hostname: 'esp32esp32.cloud.shiftr.io',
+            port: 443,
+            path: '/mqtt',
+            username: 'esp32esp32',
+            password: 'Tg7bLYU0Z7d6z78Z',
+            clientId: 'web_' + Math.random().toString(16).slice(2, 8)
+        };
 
-        const client = mqtt.connect(broker, {
-            clientId: 'web_' + Math.random().toString(16).slice(2, 8),
-            rejectUnauthorized: false // Ignoriraj certifikat ako browser zeza
-        });
+        debugEl.innerText = "Pokušavam se spojiti na WSS...";
+
+        const client = mqtt.connect(options);
 
         client.on('connect', () => {
+            console.log("Spojen na Shiftr!");
             statusEl.innerText = "SUSTAV ONLINE";
             statusEl.style.color = "#2ecc71";
-            debugEl.innerText = "Spojen na Cloud!";
+            debugEl.innerText = "Sustav je spojen na Cloud!";
             client.subscribe('barijera/sensor/status_barijere/state');
         });
 
@@ -58,6 +66,7 @@
 
         client.on('error', (err) => {
             debugEl.innerText = "Greška: " + err;
+            console.error(err);
         });
 
         function sendAction() {
