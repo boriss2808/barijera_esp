@@ -4,40 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barijera App</title>
+    <!-- MQTT Biblioteka -->
     <script src="https://cdnjs.cloudflare.com"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
+        body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; margin: 0; }
         .card { background: #1e1e1e; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: inline-block; width: 85%; max-width: 350px; }
-        #status { font-size: 1.2em; margin-bottom: 25px; color: #f1c40f; font-weight: bold; min-height: 1.5em; }
-        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; background: #34495e; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
-        .btn-active { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); }
+        #status { font-size: 1.2em; margin-bottom: 25px; color: #f1c40f; font-weight: bold; min-height: 1.5em; text-transform: uppercase; }
+        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; background: #34495e; box-shadow: 0 10px 20px rgba(0,0,0,0.4); outline: none; -webkit-tap-highlight-color: transparent; }
+        .btn-up { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); }
         .btn-down { background: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.4); }
+        .btn:active { transform: scale(0.92); }
+        .info { margin-top: 20px; font-size: 0.8em; color: #555; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>🚗 BARIJERA</h2>
-        <div id="status">Povezivanje...</div>
+        <div id="status">POVEZIVANJE...</div>
         <button id="mainBtn" class="btn" onclick="sendAction()">START</button>
+        <div class="info" id="debug">Inicijalizacija...</div>
     </div>
 
     <script>
-        // --- ISPRAVLJENE POSTAVKE S NOVOM LOZINKOM ---
-        const BROKER = 'wss://barijera.cloud.shiftr.io:443/mqtt';
+        // --- TVOJI NOVI PODACI ---
+        const BROKER = 'wss://esp32esp32.cloud.shiftr.io:443/mqtt';
         const OPTIONS = {
-            username: 'barijera',
-            password: '_RFp!dhH59r;B=', // Tvoja nova lozinka
-            clientId: 'web_client_' + Math.random().toString(16).slice(2, 8)
+            username: 'esp32esp32',
+            password: 'Tg7bLYU0Z7d6z78Z', // Nova lozinka bez čudnih znakova
+            clientId: 'web_user_' + Math.random().toString(16).slice(2, 8)
         };
 
         const client = mqtt.connect(BROKER, OPTIONS);
         const statusEl = document.getElementById('status');
+        const debugEl = document.getElementById('debug');
         const btnEl = document.getElementById('mainBtn');
 
         client.on('connect', () => {
-            console.log("Spojeno na Shiftr!");
-            statusEl.innerText = "Sustav Online";
+            console.log("Spojeno na Shiftr.io!");
+            statusEl.innerText = "SUSTAV ONLINE";
             statusEl.style.color = "#2ecc71";
+            debugEl.innerText = "Veza aktivna";
+            // Slušamo status koji šalje ESP32
             client.subscribe('barijera/sensor/status_barijere/state');
         });
 
@@ -45,24 +52,38 @@
             const msg = message.toString();
             statusEl.innerText = msg;
             
+            // Promjena izgleda gumba na temelju statusa senzora
             if (msg.includes("SPUŠTENA")) {
-                btnEl.className = "btn btn-active";
+                btnEl.className = "btn btn-up";
                 btnEl.innerText = "PODIGNI";
             } else if (msg.includes("PODIGNUTA")) {
                 btnEl.className = "btn btn-down";
                 btnEl.innerText = "SPUSTI";
+            } else {
+                btnEl.className = "btn";
+                btnEl.innerText = "POKRENI";
             }
         });
 
         client.on('error', (err) => {
-            statusEl.innerText = "Greška u prijavi!";
-            console.error(err);
+            statusEl.innerText = "GREŠKA!";
+            statusEl.style.color = "#e74c3c";
+            debugEl.innerText = "Error: " + err.message;
+        });
+
+        client.on('offline', () => {
+            statusEl.innerText = "OFFLINE";
+            statusEl.style.color = "#e74c3c";
         });
 
         function sendAction() {
             if (client.connected) {
                 client.publish('barijera/komanda', 'OTVORI');
-                console.log("Naredba OTVORI poslana!");
+                console.log("Naredba poslana!");
+                // Kratka vizualna povratna informacija
+                debugEl.innerText = "Naredba poslana u " + new Date().toLocaleTimeString();
+            } else {
+                alert("Nema veze s oblakom!");
             }
         }
     </script>
