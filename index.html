@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barijera</title>
+    <script src="https://unpkg.com"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
+        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 20px; color: white; cursor: pointer; box-shadow: 0 0 20px rgba(0,0,0,0.5); margin-top: 20px; }
+        .btn-ready { background: #3498db; }
+        .status { font-size: 22px; margin-bottom: 20px; color: #2ecc71; }
+    </style>
+</head>
+<body>
+    <div id="status" class="status">Povezivanje...</div>
+    <button id="mainBtn" class="btn btn-ready" onclick="sendAction()">POKRENI</button>
+
+    <script>
+        // Postavke za Shiftr.io
+        const broker = 'wss://barijera:a65EJswlw1IfaJ15@barijera.cloud.shiftr.io';
+        const client = mqtt.connect(broker);
+
+        client.on('connect', () => {
+            document.getElementById('status').innerText = "Sustav Online";
+            client.subscribe('barijera/sensor/status_barijere/state');
+        });
+
+        client.on('message', (topic, message) => {
+            document.getElementById('status').innerText = message.toString();
+        });
+
+        function sendAction() {
+            client.publish('barijera/komanda', 'OTVORI');
+            console.log("Naredba poslana!");
+        }
+    </script>
+</body>
+</html>
 
