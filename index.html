@@ -4,37 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barijera</title>
+    <!-- MQTT Biblioteka -->
     <script src="https://unpkg.com"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
-        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 20px; color: white; cursor: pointer; box-shadow: 0 0 20px rgba(0,0,0,0.5); margin-top: 20px; }
-        .btn-ready { background: #3498db; }
-        .status { font-size: 22px; margin-bottom: 20px; color: #2ecc71; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; }
+        .card { background: #1e1e1e; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: inline-block; width: 80%; max-width: 350px; }
+        .status { font-size: 1.1em; margin-bottom: 25px; color: #7f8c8d; font-weight: 300; }
+        .status-active { color: #2ecc71; font-weight: bold; }
+        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.4); outline: none; -webkit-tap-highlight-color: transparent; }
+        .btn-idle { background: #34495e; color: #95a5a6; }
+        .btn-up { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.3); }
+        .btn-down { background: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.3); }
+        .btn:active { transform: scale(0.95); box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
-    <div id="status" class="status">Povezivanje...</div>
-    <button id="mainBtn" class="btn btn-ready" onclick="sendAction()">POKRENI</button>
+    <div class="card">
+        <h2>🚗 Barijera Sustav</h2>
+        <div id="status" class="status">Povezivanje...</div>
+        <button id="mainBtn" class="btn btn-idle" onclick="sendAction()">START</button>
+    </div>
 
     <script>
-        // Postavke za Shiftr.io
+        // --- TVOJE SHIFTR.IO POSTAVKE ---
+        // Format: wss://username:password@broker-url
         const broker = 'wss://barijera:a65EJswlw1IfaJ15@barijera.cloud.shiftr.io';
+        
+        // Povezivanje na Shiftr.io preko WebSocketsa
         const client = mqtt.connect(broker);
 
+        const statusEl = document.getElementById('status');
+        const btnEl = document.getElementById('mainBtn');
+
         client.on('connect', () => {
-            document.getElementById('status').innerText = "Sustav Online";
+            console.log("Spojen na Shiftr.io!");
+            statusEl.innerText = "Sustav spreman";
+            statusEl.classList.add('status-active');
+            // Slušamo status koji šalje ESP32
             client.subscribe('barijera/sensor/status_barijere/state');
         });
 
         client.on('message', (topic, message) => {
-            document.getElementById('status').innerText = message.toString();
+            const msg = message.toString();
+            statusEl.innerText = msg;
+            
+            // Inteligentna promjena boje i teksta gumba
+            if (msg.includes("SPUŠTENA")) {
+                btnEl.className = "btn btn-up";
+                btnEl.innerText = "PODIGNI";
+            } else if (msg.includes("PODIGNUTA")) {
+                btnEl.className = "btn btn-down";
+                btnEl.innerText = "SPUSTI";
+            } else {
+                btnEl.className = "btn btn-idle";
+                btnEl.innerText = "PULSE";
+            }
+        });
+
+        client.on('error', (err) => {
+            console.error("Greška:", err);
+            statusEl.innerText = "Greška u vezi!";
         });
 
         function sendAction() {
+            // Šaljemo naredbu točno na topic koji ESP32 sluša (barijera/komanda)
             client.publish('barijera/komanda', 'OTVORI');
-            console.log("Naredba poslana!");
+            console.log("Naredba OTVORI poslana!");
         }
     </script>
 </body>
 </html>
-
