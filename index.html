@@ -1,77 +1,136 @@
-<!DOCTYPE html>
-<html lang="hr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barijera App</title>
-    <!-- Koristimo najnoviju stabilnu MQTT biblioteku -->
-    <script src="https://unpkg.com"></script>
-    <style>
-        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding-top: 50px; margin: 0; }
-        .card { background: #1e1e1e; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: inline-block; width: 85%; max-width: 350px; }
-        #status { font-size: 1.2em; margin-bottom: 25px; color: #f1c40f; font-weight: bold; min-height: 1.5em; }
-        .btn { width: 180px; height: 180px; border-radius: 50%; border: none; font-size: 22px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; background: #34495e; box-shadow: 0 10px 20px rgba(0,0,0,0.4); outline: none; }
-        .btn-active { background: #2ecc71; box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); }
-        .btn-down { background: #e74c3c; box-shadow: 0 0 30px rgba(231, 76, 60, 0.4); }
-        #debug { margin-top: 20px; font-size: 0.8em; color: #555; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>🚗 BARIJERA</h2>
-        <div id="status">POVEZIVANJE...</div>
-        <button id="mainBtn" class="btn" onclick="sendAction()">START</button>
-        <div id="debug">Status: Čekam Cloud...</div>
-    </div>
+esphome:
+  name: moj-esp32
 
-    <script>
-        const statusEl = document.getElementById('status');
-        const debugEl = document.getElementById('debug');
-        const btnEl = document.getElementById('mainBtn');
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
 
-        // Shiftr.io WSS format koji direktno definira putanju /mqtt
-        const BROKER_URL = 'wss://esp32esp32:Tg7bLYU0Z7d6z78Z@esp32esp32.cloud.shiftr.io/mqtt';
+wifi:
+  ssid: "K2PS"
+  password: "ebad7a38a3"
+  fast_connect: true
 
-        debugEl.innerText = "Spajanje na Shiftr...";
+# --- EMQX CLOUD KONFIGURACIJA ---
+mqtt:
+  broker: "xf131e86.ala.eu-central-1.emqxsl.com"
+  port: 8883
+  username: "esp32_barijera" 
+  password: "BpPE!qafiUp68QzB" # Tvoj App Secret (mora biti dodan u Authentication tabu!)
+  topic_prefix: "barijera"
+  skip_cert_cn_check: true
+  
+  on_message:
+    - topic: "barijera/komanda"
+      payload: "OTVORI"
+      then:
+        - lambda: |-
+            id(barrier_button).press();
 
-        const client = mqtt.connect(BROKER_URL, {
-            clientId: 'web_' + Math.random().toString(16).slice(2, 8)
-        });
+web_server:
+  port: 80
 
-        client.on('connect', () => {
-            console.log("Spojen na Shiftr!");
-            statusEl.innerText = "SUSTAV ONLINE";
-            statusEl.style.color = "#2ecc71";
-            debugEl.innerText = "Povezano! Čekam status barijere...";
-            // Slušamo točan topic koji šalje tvoj ESP32
-            client.subscribe('barijera/sensor/status_barijere/state');
-        });
+api:
+  encryption:
+    key: "j+G6pXW/p5T9n2VzL9X8kR4mQ7vB3nL1pZ0xY2wV9c4="
 
-        client.on('message', (topic, message) => {
-            const msg = message.toString();
-            statusEl.innerText = msg;
-            if (msg.includes("SPUŠTENA")) {
-                btnEl.className = "btn btn-active";
-                btnEl.innerText = "PODIGNI";
-            } else if (msg.includes("PODIGNUTA")) {
-                btnEl.className = "btn btn-down";
-                btnEl.innerText = "SPUSTI";
-            }
-        });
+logger:
+ota:
+  - platform: esphome
 
-        client.on('error', (err) => {
-            debugEl.innerText = "Greška: " + err.message;
-            console.error(err);
-        });
+# 1. RELEJI (4 kanala)
+switch:
+  - platform: gpio
+    pin: 18
+    id: relay_up_1
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 1s
+      - switch.turn_off: relay_up_1
+  - platform: gpio
+    pin: 19
+    id: relay_up_2
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 1s
+      - switch.turn_off: relay_up_2
+  - platform: gpio
+    pin: 21
+    id: relay_down_1
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 1s
+      - switch.turn_off: relay_down_1
+  - platform: gpio
+    pin: 22
+    id: relay_down_2
+    inverted: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 1s
+      - switch.turn_off: relay_down_2
 
-        function sendAction() {
-            if (client.connected) {
-                client.publish('barijera/komanda', 'OTVORI');
-                debugEl.innerText = "Naredba poslana u " + new Date().toLocaleTimeString();
-            } else {
-                alert("Nema veze s oblakom!");
-            }
-        }
-    </script>
-</body>
-</html>
+# 2. SENZORI
+binary_sensor:
+  - platform: gpio
+    pin: {number: 4, mode: INPUT_PULLUP}
+    id: s1_top
+    internal: true
+  - platform: gpio
+    pin: {number: 12, mode: INPUT_PULLUP}
+    id: s2_top
+    internal: true
+  - platform: gpio
+    pin: {number: 5, mode: INPUT_PULLUP}
+    id: s1_bottom
+    internal: true
+  - platform: gpio
+    pin: {number: 13, mode: INPUT_PULLUP}
+    id: s2_bottom
+    internal: true
+
+# 3. PAMETNA TIPKA I STATUS
+button:
+  - platform: template
+    name: "Upravljanje Barijerom"
+    id: barrier_button
+    icon: "mdi:gesture-tap"
+    on_press:
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: s1_bottom
+              - binary_sensor.is_on: s2_bottom
+          then:
+            - switch.turn_on: relay_up_1
+            - switch.turn_on: relay_up_2
+          else:
+            - if:
+                condition:
+                  and:
+                    - binary_sensor.is_on: s1_top
+                    - binary_sensor.is_on: s2_top
+                then:
+                  - switch.turn_on: relay_down_1
+                  - switch.turn_on: relay_down_2
+
+text_sensor:
+  - platform: template
+    name: "Status Barijere"
+    id: status_barijere
+    lambda: |-
+      if (id(s1_top).state && id(s2_top).state) {
+        return (std::string) "PODIGNUTA - Sljedeće: SPUSTI";
+      } else if (id(s1_bottom).state && id(s2_bottom).state) {
+        return (std::string) "SPUŠTENA - Sljedeće: PODIGNI";
+      } else {
+        return (std::string) "U POKRETU...";
+      }
+    update_interval: 1s
