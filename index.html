@@ -246,11 +246,12 @@ body::before {
 
   <hr class="divider">
 
-  <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Izvoz za GitHub</div>
-  <div style="font-size:10px;color:var(--text3);font-family:monospace;">Kopiraj u <code style="color:var(--text2)">users.json</code> na GitHubu:</div>
-  <button class="btn btn-ghost" style="padding:10px;" onclick="generateJson()">Generiraj JSON</button>
-  <div class="json-output" id="jsonOutput"></div>
-  <button class="btn btn-blue" id="copyBtn" style="display:none;" onclick="copyJson()">Kopiraj JSON</button>
+  <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Spremi na GitHub</div>
+  <div class="field">
+    <label>GitHub Token</label>
+    <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off">
+  </div>
+  <button class="btn btn-blue" onclick="saveToGithub()">Spremi users.json na GitHub</button>
 </div>
 
 <script>
@@ -521,6 +522,59 @@ window.addEventListener('load', async () => {
     connectMQTT();
   }
 });
+
+
+async function saveToGithub() {
+  const token = document.getElementById('ghToken').value.trim();
+  const okEl = document.getElementById('adminOk');
+  const errEl = document.getElementById('adminErr');
+  okEl.classList.remove('show');
+  errEl.classList.remove('show');
+
+  if (!token) {
+    errEl.textContent = 'Upiši GitHub token!';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const owner = 'boriss2808';
+  const repo  = 'barijera_esp';
+  const path  = 'users.json';
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+  // Dohvati SHA trenutne datoteke
+  let sha = '';
+  try {
+    const r = await fetch(apiUrl, { headers: { 'Authorization': 'token ' + token } });
+    if (r.ok) { const d = await r.json(); sha = d.sha; }
+  } catch(e) {}
+
+  const json = JSON.stringify(users, null, 2);
+  const content64 = btoa(unescape(encodeURIComponent(json)));
+
+  const body = { message: 'Ažuriraj korisnike', content: content64 };
+  if (sha) body.sha = sha;
+
+  try {
+    const r = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (r.ok) {
+      okEl.textContent = 'Uspješno spremljeno na GitHub!';
+      okEl.classList.add('show');
+      document.getElementById('ghToken').value = '';
+    } else {
+      const d = await r.json();
+      errEl.textContent = 'Greška: ' + (d.message || r.status);
+      errEl.classList.add('show');
+    }
+  } catch(e) {
+    errEl.textContent = 'Greška pri spajanju na GitHub.';
+    errEl.classList.add('show');
+  }
+}
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
