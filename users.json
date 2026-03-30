@@ -6,9 +6,5 @@
   "prvi": {
     "hash": "9ec2eb39a82131bb13157cd4eefe219aecf4f0190bde4565d30a93ab64482daa",
     "role": "user"
-  },
-  "drugi": {
-    "hash": "79d5c721829457ab596a3adf323094139d3649c1bb9acdee66671f2bfca34e25",
-    "role": "user"
   }
 }
