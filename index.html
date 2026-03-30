@@ -16,13 +16,13 @@
   --bg: #0d0d0d; --surface: #161616; --border: #252525; --border2: #333;
   --text: #efefef; --text2: #777; --text3: #444;
   --open: #4ade80; --closed: #60a5fa; --moving: #fbbf24; --error: #f87171;
-  --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  --admin: #c084fc;
 }
 body {
   background: var(--bg); color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 24px; overflow: hidden;
+  padding: 24px;
 }
 body::before {
   content: ''; position: fixed; inset: 0;
@@ -31,15 +31,15 @@ body::before {
   background-size: 48px 48px; opacity: 0.2; pointer-events: none;
 }
 
-/* ── Login ── */
-.login-wrap {
+/* ── Zajednički stilovi ── */
+.card {
   position: relative; z-index: 1;
   background: var(--surface); border: 1px solid var(--border2);
   border-radius: 16px; padding: 32px 28px;
-  width: 100%; max-width: 340px;
+  width: 100%; max-width: 360px;
   display: flex; flex-direction: column; gap: 16px;
 }
-.login-title {
+.card-title {
   font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
   color: var(--text2); text-align: center; font-family: monospace;
 }
@@ -52,21 +52,35 @@ body::before {
 }
 .field input:focus { border-color: #555; }
 .field input::placeholder { color: var(--text3); }
-.btn-login {
-  background: #1a4a2e; border: 1px solid #22633e; border-radius: 8px;
-  color: var(--open); font-family: monospace; font-size: 11px;
+
+.btn {
+  border-radius: 8px; font-family: monospace; font-size: 11px;
   letter-spacing: 0.1em; text-transform: uppercase;
-  padding: 13px; cursor: pointer; transition: all 0.15s;
+  padding: 13px; cursor: pointer; transition: all 0.15s; border: 1px solid;
 }
-.btn-login:hover { background: #1f5c38; }
-.login-err { font-family: monospace; font-size: 11px; color: var(--error); text-align: center; display: none; }
-.login-err.show { display: block; }
+.btn-green { background: #1a4a2e; border-color: #22633e; color: var(--open); }
+.btn-green:hover { background: #1f5c38; }
+.btn-blue { background: #1a2a4a; border-color: #22396e; color: var(--closed); }
+.btn-blue:hover { background: #1f3560; }
+.btn-purple { background: #2a1a4a; border-color: #6e22a0; color: var(--admin); }
+.btn-purple:hover { background: #341f5c; }
+.btn-red { background: #4a1a1a; border-color: #8b2222; color: var(--error); }
+.btn-red:hover { background: #5c1f1f; }
+.btn-ghost { background: transparent; border-color: var(--border2); color: var(--text2); }
+.btn-ghost:hover { border-color: #555; color: var(--text); }
+
+.err { font-family: monospace; font-size: 11px; color: var(--error); text-align: center; display: none; }
+.err.show { display: block; }
+.ok { font-family: monospace; font-size: 11px; color: var(--open); text-align: center; display: none; }
+.ok.show { display: block; }
+
+/* ── Login ── */
+#loginWrap { display: flex; }
 
 /* ── App ── */
-.app {
-  position: relative; z-index: 1; width: 100%; max-width: 360px;
-  display: flex; flex-direction: column; align-items: center; gap: 0;
-  display: none;
+#appWrap {
+  display: none; flex-direction: column; align-items: center; gap: 0;
+  width: 100%; max-width: 360px; position: relative; z-index: 1;
 }
 .top {
   font-family: monospace; font-size: 10px; letter-spacing: 0.15em;
@@ -75,15 +89,13 @@ body::before {
   justify-content: space-between; width: 100%;
 }
 .top-left { display: flex; align-items: center; gap: 8px; }
-.top-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: var(--text3); transition: all 0.3s;
-}
+.top-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); transition: all 0.3s; }
 .top-dot.online { background: var(--open); box-shadow: 0 0 6px var(--open); }
 .top-dot.offline { background: var(--error); box-shadow: 0 0 6px var(--error); }
 .top-dot.connecting { background: var(--text3); animation: blink 1s ease-in-out infinite; }
-.logout { color: var(--text3); cursor: pointer; font-size: 10px; letter-spacing: 0.08em; }
-.logout:hover { color: var(--text2); }
+.top-actions { display: flex; gap: 12px; }
+.top-link { color: var(--text3); cursor: pointer; font-size: 10px; letter-spacing: 0.08em; }
+.top-link:hover { color: var(--text2); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 .main-btn {
@@ -100,7 +112,6 @@ body::before {
 .main-btn.state-open   { border-color: var(--open); }
 .main-btn.state-closed { border-color: var(--closed); }
 .main-btn.state-moving { border-color: var(--moving); animation: pulse-moving 1s ease-in-out infinite; }
-
 @keyframes pulse-moving {
   0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0)}
   50%{box-shadow:0 0 0 14px rgba(251,191,36,0.07)}
@@ -120,42 +131,48 @@ body::before {
 .arrow.moving-up   { color: var(--moving); animation: bounce-up 0.8s ease-in-out infinite; }
 .arrow.moving-down { color: var(--moving); animation: bounce-down 0.8s ease-in-out infinite; }
 
-.btn-label {
-  font-family: monospace; font-size: 13px; letter-spacing: 0.12em;
-  text-transform: uppercase; font-weight: 500; transition: color 0.3s;
-}
+.btn-label { font-family: monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; transition: color 0.3s; }
 .btn-label.open   { color: var(--open); }
 .btn-label.closed { color: var(--closed); }
 .btn-label.moving { color: var(--moving); }
 
-.status-area {
-  margin-top: 40px; height: 64px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-}
-.status-text {
-  font-size: 18px; font-weight: 500; letter-spacing: 0.08em;
-  color: var(--text2); transition: color 0.3s; text-align: center;
-}
+.status-area { margin-top: 40px; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.status-text { font-size: 18px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2); transition: color 0.3s; text-align: center; }
 .status-text.open   { color: var(--open); }
 .status-text.closed { color: var(--closed); }
 .status-text.moving { color: var(--moving); }
+.status-note { font-family: monospace; font-size: 10px; color: var(--text3); letter-spacing: 0.06em; text-align: center; }
+.last-action { margin-top: 20px; font-family: monospace; font-size: 10px; color: var(--text3); text-align: center; letter-spacing: 0.06em; }
 
-.status-note {
-  font-family: monospace; font-size: 10px; color: var(--text3);
-  letter-spacing: 0.06em; text-align: center;
+/* ── Admin ── */
+#adminWrap { display: none; }
+.admin-header { display: flex; align-items: center; justify-content: space-between; }
+.admin-header span { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--admin); font-family: monospace; }
+.user-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+.user-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #1e1e1e; border: 1px solid var(--border2); border-radius: 8px;
+  padding: 10px 14px; font-family: monospace; font-size: 12px;
 }
-
-.last-action {
-  margin-top: 20px; font-family: monospace; font-size: 10px;
-  color: var(--text3); text-align: center; letter-spacing: 0.06em;
+.user-item .user-name { color: var(--text); }
+.user-item .user-role { font-size: 10px; color: var(--text3); margin-left: 8px; }
+.user-del { background: none; border: none; color: var(--error); cursor: pointer; font-size: 16px; padding: 0 4px; opacity: 0.6; }
+.user-del:hover { opacity: 1; }
+.divider { border: none; border-top: 1px solid var(--border2); margin: 4px 0; }
+.json-output {
+  background: #1a1a1a; border: 1px solid var(--border2); border-radius: 8px;
+  padding: 12px; font-family: monospace; font-size: 10px; color: var(--text2);
+  white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto;
+  display: none;
 }
+.json-output.show { display: block; }
 </style>
 </head>
 <body>
 
 <!-- Login -->
-<div class="login-wrap" id="loginWrap">
-  <div class="login-title">&#128274; Pristup barijeri</div>
+<div class="card" id="loginWrap">
+  <div class="card-title">&#128274; Pristup barijeri</div>
   <div class="field">
     <label>Korisničko ime</label>
     <input type="text" id="loginUser" autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="username">
@@ -164,18 +181,21 @@ body::before {
     <label>Lozinka</label>
     <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
   </div>
-  <button class="btn-login" onclick="doLogin()">Prijavi se &rarr;</button>
-  <div class="login-err" id="loginErr">Pogrešno korisničko ime ili lozinka</div>
+  <button class="btn btn-green" onclick="doLogin()">Prijavi se &rarr;</button>
+  <div class="err" id="loginErr">Pogrešno korisničko ime ili lozinka</div>
 </div>
 
 <!-- App -->
-<div class="app" id="appWrap">
+<div id="appWrap">
   <div class="top">
     <div class="top-left">
       <div class="top-dot connecting" id="topDot"></div>
       <span id="topUser">Barijera</span>
     </div>
-    <span class="logout" onclick="doLogout()">odjava</span>
+    <div class="top-actions">
+      <span class="top-link" id="adminLink" onclick="showAdmin()" style="display:none;color:var(--admin)">admin</span>
+      <span class="top-link" onclick="doLogout()">odjava</span>
+    </div>
   </div>
 
   <button class="main-btn" id="mainBtn" onclick="handleClick()" disabled>
@@ -191,73 +211,226 @@ body::before {
     <div class="status-text" id="statusText">čekam status...</div>
     <div class="status-note">Stanje prema zadnjoj naredbi</div>
   </div>
-
   <div class="last-action" id="lastAction"></div>
+</div>
+
+<!-- Admin -->
+<div class="card" id="adminWrap">
+  <div class="admin-header">
+    <span>&#9881; Korisnici</span>
+    <button class="btn btn-ghost" style="padding:6px 12px;font-size:10px;" onclick="showApp()">&#8592; natrag</button>
+  </div>
+
+  <div class="user-list" id="userList"></div>
+
+  <hr class="divider">
+
+  <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Dodaj korisnika</div>
+  <div class="field">
+    <label>Korisničko ime</label>
+    <input type="text" id="newUser" autocomplete="off" autocapitalize="none" placeholder="username">
+  </div>
+  <div class="field">
+    <label>Lozinka</label>
+    <input type="password" id="newPass" placeholder="••••••••">
+  </div>
+  <div style="display:flex;gap:8px;">
+    <select id="newRole" style="flex:1;background:#1e1e1e;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:monospace;font-size:12px;padding:11px 14px;outline:none;">
+      <option value="user">Korisnik</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button class="btn btn-purple" style="flex:2;" onclick="addUser()">Dodaj</button>
+  </div>
+  <div class="err" id="adminErr"></div>
+  <div class="ok" id="adminOk"></div>
+
+  <hr class="divider">
+
+  <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Izvoz za GitHub</div>
+  <div style="font-size:10px;color:var(--text3);font-family:monospace;">Kopiraj u <code style="color:var(--text2)">users.json</code> na GitHubu:</div>
+  <button class="btn btn-ghost" style="padding:10px;" onclick="generateJson()">Generiraj JSON</button>
+  <div class="json-output" id="jsonOutput"></div>
+  <button class="btn btn-blue" id="copyBtn" style="display:none;" onclick="copyJson()">Kopiraj JSON</button>
 </div>
 
 <script>
 // ── Konfiguracija ─────────────────────────────────────────────────────────────
-const EMQX_HOST   = "xf131e86.ala.eu-central-1.emqxsl.com";
-const EMQX_PORT   = 8084;
-const TOPIC_CMD   = "barijera/komanda";
+const EMQX_HOST    = "xf131e86.ala.eu-central-1.emqxsl.com";
+const EMQX_PORT    = 8084;
+const TOPIC_CMD    = "barijera/komanda";
 const TOPIC_STATUS = "barijera/status";
 
-// Korisnici (username → EMQX lozinka)
-// Dodajte korisnike ovdje — svaki korisnik ima svoj EMQX account
-const USERS = {
-  "pwa": "pwapass"
-};
+// GitHub raw URL za users.json (promijeni na svoj repozitorij)
+const USERS_URL = "https://raw.githubusercontent.com/TVOJ_USERNAME/TVOJ_REPO/main/users.json";
+
+// EMQX account koji svi korisnici dijele
+const EMQX_USER = "pwa_barijera";
+const EMQX_PASS = "LOZINKA_PWA_BARIJERA";
+
+// Admin lozinka (SHA-256 hash od "adminpass" — promijeni!)
+const ADMIN_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let client = null;
 let currentUser = null;
-let barrierState = null; // OPEN, CLOSED, MOVING
+let currentRole = null;
+let barrierState = null;
 let isMoving = false;
+let users = {}; // { username: { hash, role } }
+
+// ── Hash ──────────────────────────────────────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Učitaj korisnike s GitHuba ────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const r = await fetch(USERS_URL + '?t=' + Date.now());
+    if (r.ok) {
+      users = await r.json();
+      return true;
+    }
+  } catch(e) {}
+  // Fallback na lokalne korisnike iz localStorage
+  const local = localStorage.getItem('barrier_users');
+  if (local) { users = JSON.parse(local); return true; }
+  return false;
+}
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-function doLogin() {
+async function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
   if (!u || !p) return;
 
-  if (!USERS[u] || USERS[u] !== p) {
+  await loadUsers();
+
+  const hash = await sha256(p);
+
+  if (!users[u] || users[u].hash !== hash) {
     document.getElementById('loginErr').classList.add('show');
     return;
   }
 
   currentUser = u;
+  currentRole = users[u].role || 'user';
   localStorage.setItem('barrier_user', u);
-  localStorage.setItem('barrier_pass', p);
+  localStorage.setItem('barrier_hash', hash);
   showApp();
-  connectMQTT(u, USERS[u]);
+  connectMQTT();
 }
 
 function doLogout() {
   if (client) client.end();
   localStorage.removeItem('barrier_user');
-  localStorage.removeItem('barrier_pass');
+  localStorage.removeItem('barrier_hash');
   currentUser = null;
+  currentRole = null;
   document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('adminWrap').style.display = 'none';
   document.getElementById('loginWrap').style.display = 'flex';
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').classList.remove('show');
 }
 
 function showApp() {
   document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('adminWrap').style.display = 'none';
   document.getElementById('appWrap').style.display = 'flex';
   document.getElementById('topUser').textContent = currentUser;
+  document.getElementById('adminLink').style.display = currentRole === 'admin' ? 'block' : 'none';
+}
+
+function showAdmin() {
+  if (currentRole !== 'admin') return;
+  document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('adminWrap').style.display = 'flex';
+  renderUserList();
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+function renderUserList() {
+  const el = document.getElementById('userList');
+  el.innerHTML = '';
+  for (const [name, data] of Object.entries(users)) {
+    const div = document.createElement('div');
+    div.className = 'user-item';
+    div.innerHTML = `
+      <span>
+        <span class="user-name">${name}</span>
+        <span class="user-role">${data.role || 'user'}</span>
+      </span>
+      <button class="user-del" onclick="deleteUser('${name}')" title="Obriši">×</button>
+    `;
+    el.appendChild(div);
+  }
+}
+
+async function addUser() {
+  const u = document.getElementById('newUser').value.trim();
+  const p = document.getElementById('newPass').value;
+  const r = document.getElementById('newRole').value;
+  const errEl = document.getElementById('adminErr');
+  const okEl = document.getElementById('adminOk');
+
+  errEl.classList.remove('show');
+  okEl.classList.remove('show');
+
+  if (!u || !p) { errEl.textContent = 'Upiši korisničko ime i lozinku'; errEl.classList.add('show'); return; }
+  if (users[u]) { errEl.textContent = 'Korisnik već postoji'; errEl.classList.add('show'); return; }
+
+  const hash = await sha256(p);
+  users[u] = { hash, role: r };
+  localStorage.setItem('barrier_users', JSON.stringify(users));
+
+  document.getElementById('newUser').value = '';
+  document.getElementById('newPass').value = '';
+  okEl.textContent = `Korisnik "${u}" dodan. Generiraj JSON i spremi na GitHub.`;
+  okEl.classList.add('show');
+  renderUserList();
+}
+
+function deleteUser(name) {
+  if (name === currentUser) {
+    document.getElementById('adminErr').textContent = 'Ne možeš obrisati sebe!';
+    document.getElementById('adminErr').classList.add('show');
+    return;
+  }
+  delete users[name];
+  localStorage.setItem('barrier_users', JSON.stringify(users));
+  renderUserList();
+  document.getElementById('adminOk').textContent = `Korisnik "${name}" obrisan. Generiraj JSON i spremi na GitHub.`;
+  document.getElementById('adminOk').classList.add('show');
+}
+
+function generateJson() {
+  const json = JSON.stringify(users, null, 2);
+  const el = document.getElementById('jsonOutput');
+  el.textContent = json;
+  el.classList.add('show');
+  document.getElementById('copyBtn').style.display = 'block';
+}
+
+function copyJson() {
+  const text = document.getElementById('jsonOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('adminOk').textContent = 'Kopirano! Spremi kao users.json na GitHub.';
+    document.getElementById('adminOk').classList.add('show');
+  });
 }
 
 // ── MQTT ──────────────────────────────────────────────────────────────────────
-function connectMQTT(username, password) {
+function connectMQTT() {
   setDot('connecting');
   const clientId = 'pwa_' + Math.random().toString(36).substr(2, 9);
 
   client = mqtt.connect(`wss://${EMQX_HOST}:${EMQX_PORT}/mqtt`, {
     clientId,
-    username,
-    password,
+    username: EMQX_USER,
+    password: EMQX_PASS,
     clean: true,
     reconnectPeriod: 3000,
     connectTimeout: 10000,
@@ -270,27 +443,19 @@ function connectMQTT(username, password) {
   });
 
   client.on('message', (topic, payload) => {
-    if (topic === TOPIC_STATUS) {
-      handleStatus(payload.toString());
-    }
+    if (topic === TOPIC_STATUS) handleStatus(payload.toString());
   });
 
-  client.on('error', (err) => {
-    setDot('offline');
-    console.error('MQTT error:', err);
-  });
-
+  client.on('error', () => setDot('offline'));
   client.on('offline', () => setDot('offline'));
   client.on('reconnect', () => setDot('connecting'));
 }
 
-// ── Status handler ────────────────────────────────────────────────────────────
 function handleStatus(status) {
-  barrierState = status; // OPEN, CLOSED, MOVING
+  barrierState = status;
   updateUI();
 }
 
-// ── Klik ──────────────────────────────────────────────────────────────────────
 function handleClick() {
   if (isMoving || !client) return;
   if (barrierState === 'MOVING') return;
@@ -305,7 +470,6 @@ function handleClick() {
     (cmd === 'ZATVORI' ? 'Zatvaranje' : 'Otvaranje') + ' — ' + currentUser + '  ' + ds + ' ' + ts;
 }
 
-// ── UI ────────────────────────────────────────────────────────────────────────
 function updateUI() {
   const btn    = document.getElementById('mainBtn');
   const arrow  = document.getElementById('arrow');
@@ -316,40 +480,24 @@ function updateUI() {
   btn.classList.remove('state-open', 'state-closed', 'state-moving');
 
   if (barrierState === 'OPEN') {
-    btn.classList.add('state-open');
-    btn.disabled = false;
-    arrow.className = 'arrow open';
-    arrow.textContent = '↑';
-    label.className = 'btn-label open';
-    label.textContent = 'ZATVORI';
-    status.className = 'status-text open';
-    status.textContent = 'BARIJERA JE OTVORENA';
-    ring.className = 'ring-fg';
-    ring.style.strokeDasharray = '0 754';
+    btn.classList.add('state-open'); btn.disabled = false;
+    arrow.className = 'arrow open'; arrow.textContent = '↑';
+    label.className = 'btn-label open'; label.textContent = 'ZATVORI';
+    status.className = 'status-text open'; status.textContent = 'BARIJERA JE OTVORENA';
+    ring.className = 'ring-fg'; ring.style.strokeDasharray = '0 754';
     isMoving = false;
-
   } else if (barrierState === 'CLOSED') {
-    btn.classList.add('state-closed');
-    btn.disabled = false;
-    arrow.className = 'arrow closed';
-    arrow.textContent = '↓';
-    label.className = 'btn-label closed';
-    label.textContent = 'OTVORI';
-    status.className = 'status-text closed';
-    status.textContent = 'BARIJERA JE ZATVORENA';
-    ring.className = 'ring-fg closed';
-    ring.style.strokeDasharray = '754 754';
+    btn.classList.add('state-closed'); btn.disabled = false;
+    arrow.className = 'arrow closed'; arrow.textContent = '↓';
+    label.className = 'btn-label closed'; label.textContent = 'OTVORI';
+    status.className = 'status-text closed'; status.textContent = 'BARIJERA JE ZATVORENA';
+    ring.className = 'ring-fg closed'; ring.style.strokeDasharray = '754 754';
     isMoving = false;
-
   } else if (barrierState === 'MOVING') {
-    btn.classList.add('state-moving');
-    btn.disabled = true;
-    arrow.className = 'arrow moving-up';
-    arrow.textContent = '↑';
-    label.className = 'btn-label moving';
-    label.textContent = 'LANAC SE PODIŽE';
-    status.className = 'status-text moving';
-    status.textContent = 'U POKRETU...';
+    btn.classList.add('state-moving'); btn.disabled = true;
+    arrow.className = 'arrow moving-up'; arrow.textContent = '↑';
+    label.className = 'btn-label moving'; label.textContent = 'LANAC SE PODIŽE';
+    status.className = 'status-text moving'; status.textContent = 'U POKRETU...';
     ring.className = 'ring-fg moving';
     isMoving = true;
   }
@@ -361,23 +509,19 @@ function setDot(state) {
   document.getElementById('mainBtn').disabled = state !== 'online' || barrierState === 'MOVING';
 }
 
-function setRingDash(f) {
-  const circ = 2 * Math.PI * 120;
-  document.getElementById('ringFg').style.strokeDasharray = (f * circ) + ' ' + circ;
-}
-
 // ── Auto-login ────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+  await loadUsers();
   const u = localStorage.getItem('barrier_user');
-  const p = localStorage.getItem('barrier_pass');
-  if (u && p && USERS[u] && USERS[u] === p) {
+  const h = localStorage.getItem('barrier_hash');
+  if (u && h && users[u] && users[u].hash === h) {
     currentUser = u;
+    currentRole = users[u].role || 'user';
     showApp();
-    connectMQTT(u, USERS[u]);
+    connectMQTT();
   }
 });
 
-// Service Worker
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
