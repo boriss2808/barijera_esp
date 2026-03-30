@@ -2,5 +2,9 @@
   "test": {
     "hash": "937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244",
     "role": "admin"
+  },
+  "prvi": {
+    "hash": "9ec2eb39a82131bb13157cd4eefe219aecf4f0190bde4565d30a93ab64482daa",
+    "role": "user"
   }
 }
