@@ -15,7 +15,8 @@
 :root {
   --bg: #0d0d0d; --surface: #161616; --border: #252525; --border2: #333;
   --text: #efefef; --text2: #777; --text3: #444;
-  --open: #4ade80; --closed: #60a5fa; --moving: #fbbf24; --error: #f87171;
+  --open: #4ade80; --closed: #60a5fa; --moving: #fbbf24;
+  --fault: #f87171; --unknown: #888; --alarm: #ff6b35;
   --admin: #c084fc;
 }
 body {
@@ -31,7 +32,6 @@ body::before {
   background-size: 48px 48px; opacity: 0.2; pointer-events: none;
 }
 
-/* ── Zajednički stilovi ── */
 .card {
   position: relative; z-index: 1;
   background: var(--surface); border: 1px solid var(--border2);
@@ -58,21 +58,21 @@ body::before {
   letter-spacing: 0.1em; text-transform: uppercase;
   padding: 13px; cursor: pointer; transition: all 0.15s; border: 1px solid;
 }
-.btn-green { background: #1a4a2e; border-color: #22633e; color: var(--open); }
-.btn-green:hover { background: #1f5c38; }
-.btn-blue { background: #1a2a4a; border-color: #22396e; color: var(--closed); }
-.btn-blue:hover { background: #1f3560; }
+.btn-green  { background: #1a4a2e; border-color: #22633e; color: var(--open); }
+.btn-green:hover  { background: #1f5c38; }
+.btn-blue   { background: #1a2a4a; border-color: #22396e; color: var(--closed); }
+.btn-blue:hover   { background: #1f3560; }
 .btn-purple { background: #2a1a4a; border-color: #6e22a0; color: var(--admin); }
 .btn-purple:hover { background: #341f5c; }
-.btn-red { background: #4a1a1a; border-color: #8b2222; color: var(--error); }
-.btn-red:hover { background: #5c1f1f; }
-.btn-ghost { background: transparent; border-color: var(--border2); color: var(--text2); }
-.btn-ghost:hover { border-color: #555; color: var(--text); }
+.btn-red    { background: #4a1a1a; border-color: #8b2222; color: var(--fault); }
+.btn-red:hover    { background: #5c1f1f; }
+.btn-ghost  { background: transparent; border-color: var(--border2); color: var(--text2); }
+.btn-ghost:hover  { border-color: #555; color: var(--text); }
 
-.err { font-family: monospace; font-size: 11px; color: var(--error); text-align: center; display: none; }
+.err { font-family: monospace; font-size: 11px; color: var(--fault); text-align: center; display: none; }
 .err.show { display: block; }
-.ok { font-family: monospace; font-size: 11px; color: var(--open); text-align: center; display: none; }
-.ok.show { display: block; }
+.ok  { font-family: monospace; font-size: 11px; color: var(--open);  text-align: center; display: none; }
+.ok.show  { display: block; }
 
 /* ── Login ── */
 #loginWrap { display: flex; }
@@ -90,14 +90,30 @@ body::before {
 }
 .top-left { display: flex; align-items: center; gap: 8px; }
 .top-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); transition: all 0.3s; }
-.top-dot.online { background: var(--open); box-shadow: 0 0 6px var(--open); }
-.top-dot.offline { background: var(--error); box-shadow: 0 0 6px var(--error); }
+.top-dot.online     { background: var(--open);  box-shadow: 0 0 6px var(--open); }
+.top-dot.offline    { background: var(--fault); box-shadow: 0 0 6px var(--fault); }
 .top-dot.connecting { background: var(--text3); animation: blink 1s ease-in-out infinite; }
 .top-actions { display: flex; gap: 12px; }
 .top-link { color: var(--text3); cursor: pointer; font-size: 10px; letter-spacing: 0.08em; }
 .top-link:hover { color: var(--text2); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
+/* ── Alarm banner ── */
+#alarmBanner {
+  display: none; width: 100%;
+  background: #3a1a0a; border: 1px solid var(--alarm);
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+  font-family: monospace; font-size: 10px; letter-spacing: 0.08em;
+  color: var(--alarm); text-align: center; text-transform: uppercase;
+  animation: pulse-alarm 1.5s ease-in-out infinite;
+}
+#alarmBanner.show { display: block; }
+@keyframes pulse-alarm {
+  0%,100%{ border-color: var(--alarm); }
+  50%{ border-color: transparent; }
+}
+
+/* ── Glavni gumb ── */
 .main-btn {
   width: 220px; height: 220px; border-radius: 50%;
   border: 1.5px solid var(--border2); background: var(--surface);
@@ -109,39 +125,57 @@ body::before {
 .main-btn:hover { border-color: #555; }
 .main-btn:active { transform: scale(0.97); }
 .main-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-.main-btn.state-open   { border-color: var(--open); }
-.main-btn.state-closed { border-color: var(--closed); }
-.main-btn.state-moving { border-color: var(--moving); animation: pulse-moving 1s ease-in-out infinite; }
+.main-btn.state-open    { border-color: var(--open); }
+.main-btn.state-closed  { border-color: var(--closed); }
+.main-btn.state-moving  { border-color: var(--moving); animation: pulse-moving 1s ease-in-out infinite; }
+.main-btn.state-fault   { border-color: var(--fault);  animation: pulse-fault  1s ease-in-out infinite; }
+.main-btn.state-unknown { border-color: var(--unknown); }
 @keyframes pulse-moving {
-  0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0)}
-  50%{box-shadow:0 0 0 14px rgba(251,191,36,0.07)}
+  0%,100%{ box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+  50%{ box-shadow: 0 0 0 14px rgba(251,191,36,0.07); }
+}
+@keyframes pulse-fault {
+  0%,100%{ box-shadow: 0 0 0 0 rgba(248,113,113,0); }
+  50%{ box-shadow: 0 0 0 14px rgba(248,113,113,0.1); }
 }
 @keyframes bounce-up   { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
-@keyframes bounce-down { 0%,100%{transform:translateY(0)} 40%{transform:translateY(8px)} }
+@keyframes bounce-down { 0%,100%{transform:translateY(0)} 40%{transform:translateY( 8px)} }
 
 .progress-ring { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); transform: rotate(-90deg); pointer-events: none; }
 .ring-bg { fill: none; stroke: var(--border); stroke-width: 2; }
 .ring-fg { fill: none; stroke-width: 2; stroke-linecap: round; stroke: var(--open); stroke-dasharray: 0 754; transition: stroke 0.3s; }
-.ring-fg.closed { stroke: var(--closed); }
-.ring-fg.moving { stroke: var(--moving); }
+.ring-fg.closed  { stroke: var(--closed); }
+.ring-fg.moving  { stroke: var(--moving); }
+.ring-fg.fault   { stroke: var(--fault); }
+.ring-fg.unknown { stroke: var(--unknown); }
 
 .arrow { font-size: 72px; line-height: 1; user-select: none; transition: color 0.3s; }
-.arrow.open   { color: var(--open); }
-.arrow.closed { color: var(--closed); }
-.arrow.moving-up   { color: var(--moving); animation: bounce-up 0.8s ease-in-out infinite; }
+.arrow.open        { color: var(--open); }
+.arrow.closed      { color: var(--closed); }
+.arrow.moving-up   { color: var(--moving); animation: bounce-up   0.8s ease-in-out infinite; }
 .arrow.moving-down { color: var(--moving); animation: bounce-down 0.8s ease-in-out infinite; }
+.arrow.fault       { color: var(--fault); }
+.arrow.unknown     { color: var(--unknown); }
 
 .btn-label { font-family: monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; transition: color 0.3s; }
-.btn-label.open   { color: var(--open); }
-.btn-label.closed { color: var(--closed); }
-.btn-label.moving { color: var(--moving); }
+.btn-label.open    { color: var(--open); }
+.btn-label.closed  { color: var(--closed); }
+.btn-label.moving  { color: var(--moving); }
+.btn-label.fault   { color: var(--fault); }
+.btn-label.unknown { color: var(--unknown); }
 
-.status-area { margin-top: 40px; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.status-area { margin-top: 40px; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
 .status-text { font-size: 18px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2); transition: color 0.3s; text-align: center; }
-.status-text.open   { color: var(--open); }
-.status-text.closed { color: var(--closed); }
-.status-text.moving { color: var(--moving); }
+.status-text.open    { color: var(--open); }
+.status-text.closed  { color: var(--closed); }
+.status-text.moving  { color: var(--moving); }
+.status-text.fault   { color: var(--fault); }
+.status-text.unknown { color: var(--unknown); }
 .status-note { font-family: monospace; font-size: 10px; color: var(--text3); letter-spacing: 0.06em; text-align: center; }
+
+#resetFaultBtn { display: none; margin-top: 16px; width: 100%; max-width: 220px; }
+#resetFaultBtn.show { display: block; }
+
 .last-action { margin-top: 20px; font-family: monospace; font-size: 10px; color: var(--text3); text-align: center; letter-spacing: 0.06em; }
 
 /* ── Admin ── */
@@ -156,16 +190,9 @@ body::before {
 }
 .user-item .user-name { color: var(--text); }
 .user-item .user-role { font-size: 10px; color: var(--text3); margin-left: 8px; }
-.user-del { background: none; border: none; color: var(--error); cursor: pointer; font-size: 16px; padding: 0 4px; opacity: 0.6; }
+.user-del { background: none; border: none; color: var(--fault); cursor: pointer; font-size: 16px; padding: 0 4px; opacity: 0.6; }
 .user-del:hover { opacity: 1; }
 .divider { border: none; border-top: 1px solid var(--border2); margin: 4px 0; }
-.json-output {
-  background: #1a1a1a; border: 1px solid var(--border2); border-radius: 8px;
-  padding: 12px; font-family: monospace; font-size: 10px; color: var(--text2);
-  white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto;
-  display: none;
-}
-.json-output.show { display: block; }
 </style>
 </head>
 <body>
@@ -193,10 +220,12 @@ body::before {
       <span id="topUser">Barijera</span>
     </div>
     <div class="top-actions">
-      <span class="top-link" id="adminLink" onclick="showAdmin()" style="display:none;color:var(--admin)">admin</span>
-      <span class="top-link" onclick="doLogout()">odjava</span>
+      <span class="top-link" id="adminLink" onclick="showAdmin()" style="display:none;color:var(--admin)">ADMIN</span>
+      <span class="top-link" onclick="doLogout()">ODJAVA</span>
     </div>
   </div>
+
+  <div id="alarmBanner">&#9888; <span id="alarmText">alarm</span></div>
 
   <button class="main-btn" id="mainBtn" onclick="handleClick()" disabled>
     <svg class="progress-ring" viewBox="0 0 252 252">
@@ -207,9 +236,13 @@ body::before {
     <span class="btn-label" id="btnLabel">spajanje...</span>
   </button>
 
+  <button class="btn btn-red" id="resetFaultBtn" onclick="sendResetFault()">
+    &#9888; Resetiraj grešku
+  </button>
+
   <div class="status-area">
     <div class="status-text" id="statusText">čekam status...</div>
-    <div class="status-note">Stanje prema zadnjoj naredbi</div>
+    <div class="status-note" id="statusNote">Čekam MQTT vezu...</div>
   </div>
   <div class="last-action" id="lastAction"></div>
 </div>
@@ -222,7 +255,6 @@ body::before {
   </div>
 
   <div class="user-list" id="userList"></div>
-
   <hr class="divider">
 
   <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Dodaj korisnika</div>
@@ -242,8 +274,7 @@ body::before {
     <button class="btn btn-purple" style="flex:2;" onclick="addUser()">Dodaj</button>
   </div>
   <div class="err" id="adminErr"></div>
-  <div class="ok" id="adminOk"></div>
-
+  <div class="ok"  id="adminOk"></div>
   <hr class="divider">
 
   <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Spremi na GitHub</div>
@@ -256,28 +287,26 @@ body::before {
 
 <script>
 // ── Konfiguracija ─────────────────────────────────────────────────────────────
-const EMQX_HOST    = "xf131e86.ala.eu-central-1.emqxsl.com";
-const EMQX_PORT    = 8084;
-const TOPIC_CMD    = "barijera/komanda";
-const TOPIC_STATUS = "barijera/status";
+const EMQX_HOST          = "xf131e86.ala.eu-central-1.emqxsl.com";
+const EMQX_PORT          = 8084;
+const TOPIC_CMD          = "barijera/komanda";
+const TOPIC_STATUS       = "barijera/status";
+const TOPIC_AVAILABILITY = "barijera/availability";
+const TOPIC_ALARM        = "barijera/alarm";
+const TOPIC_ACK          = "barijera/ack";
 
-// GitHub raw URL za users.json (promijeni na svoj repozitorij)
 const USERS_URL = "https://raw.githubusercontent.com/boriss2808/barijera_esp/main/users.json";
-
-// EMQX account koji svi korisnici dijele
 const EMQX_USER = "pwa_barijera";
 const EMQX_PASS = "pwa1234";
 
-// Admin lozinka (SHA-256 hash od "adminpass" — promijeni!)
-const ADMIN_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
-
 // ── State ─────────────────────────────────────────────────────────────────────
-let client = null;
-let currentUser = null;
-let currentRole = null;
+let client       = null;
+let currentUser  = null;
+let currentRole  = null;
 let barrierState = null;
-let isMoving = false;
-let users = {}; // { username: { hash, role } }
+let espAvailable = false;
+let lastCmdDir   = null; // 'open' | 'close'
+let users        = {};
 
 // ── Hash ──────────────────────────────────────────────────────────────────────
 async function sha256(str) {
@@ -289,12 +318,8 @@ async function sha256(str) {
 async function loadUsers() {
   try {
     const r = await fetch(USERS_URL + '?t=' + Date.now());
-    if (r.ok) {
-      users = await r.json();
-      return true;
-    }
+    if (r.ok) { users = await r.json(); return true; }
   } catch(e) {}
-  // Fallback na lokalne korisnike iz localStorage
   const local = localStorage.getItem('barrier_users');
   if (local) { users = JSON.parse(local); return true; }
   return false;
@@ -305,16 +330,12 @@ async function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
   if (!u || !p) return;
-
   await loadUsers();
-
   const hash = await sha256(p);
-
   if (!users[u] || users[u].hash !== hash) {
     document.getElementById('loginErr').classList.add('show');
     return;
   }
-
   currentUser = u;
   currentRole = users[u].role || 'user';
   localStorage.setItem('barrier_user', u);
@@ -327,9 +348,9 @@ function doLogout() {
   if (client) client.end();
   localStorage.removeItem('barrier_user');
   localStorage.removeItem('barrier_hash');
-  currentUser = null;
-  currentRole = null;
-  document.getElementById('appWrap').style.display = 'none';
+  currentUser = null; currentRole = null;
+  barrierState = null; espAvailable = false; lastCmdDir = null;
+  document.getElementById('appWrap').style.display   = 'none';
   document.getElementById('adminWrap').style.display = 'none';
   document.getElementById('loginWrap').style.display = 'flex';
   document.getElementById('loginUser').value = '';
@@ -338,18 +359,164 @@ function doLogout() {
 }
 
 function showApp() {
-  document.getElementById('loginWrap').style.display = 'none';
-  document.getElementById('adminWrap').style.display = 'none';
-  document.getElementById('appWrap').style.display = 'flex';
-  document.getElementById('topUser').textContent = currentUser;
-  document.getElementById('adminLink').style.display = currentRole === 'admin' ? 'block' : 'none';
+  document.getElementById('loginWrap').style.display  = 'none';
+  document.getElementById('adminWrap').style.display  = 'none';
+  document.getElementById('appWrap').style.display    = 'flex';
+  document.getElementById('topUser').textContent      = currentUser;
+  document.getElementById('adminLink').style.display  = currentRole === 'admin' ? 'block' : 'none';
 }
 
 function showAdmin() {
   if (currentRole !== 'admin') return;
-  document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('appWrap').style.display   = 'none';
   document.getElementById('adminWrap').style.display = 'flex';
   renderUserList();
+}
+
+// ── MQTT ──────────────────────────────────────────────────────────────────────
+function connectMQTT() {
+  setDot('connecting');
+  const clientId = 'pwa_' + Math.random().toString(36).substr(2, 9);
+  client = mqtt.connect(`wss://${EMQX_HOST}:${EMQX_PORT}/mqtt`, {
+    clientId, username: EMQX_USER, password: EMQX_PASS,
+    clean: true, reconnectPeriod: 3000, connectTimeout: 10000,
+    rejectUnauthorized: false
+  });
+  client.on('connect', () => {
+    setDot('online');
+    client.subscribe(TOPIC_STATUS);
+    client.subscribe(TOPIC_AVAILABILITY);
+    client.subscribe(TOPIC_ALARM);
+    client.subscribe(TOPIC_ACK);
+  });
+  client.on('message', (topic, payload) => {
+    const msg = payload.toString();
+    if (topic === TOPIC_STATUS)       handleStatus(msg);
+    if (topic === TOPIC_AVAILABILITY) handleAvailability(msg);
+    if (topic === TOPIC_ALARM)        handleAlarm(msg);
+    if (topic === TOPIC_ACK)          handleAck(msg);
+  });
+  client.on('error',     () => setDot('offline'));
+  client.on('offline',   () => setDot('offline'));
+  client.on('reconnect', () => setDot('connecting'));
+}
+
+// ── Handlers ──────────────────────────────────────────────────────────────────
+function handleStatus(status) {
+  barrierState = status;
+  updateUI();
+}
+
+function handleAvailability(msg) {
+  espAvailable = (msg === 'online');
+  updateUI();
+}
+
+function handleAlarm(msg) {
+  const banner = document.getElementById('alarmBanner');
+  document.getElementById('alarmText').textContent = msg.replace(/_/g, ' ');
+  banner.classList.add('show');
+  setTimeout(() => { banner.classList.remove('show'); }, 30000);
+}
+
+function handleAck(msg) {
+  try {
+    const data = JSON.parse(msg);
+    if (data.result) {
+      const note = document.getElementById('statusNote');
+      note.textContent = data.result.replace(/_/g, ' ');
+      setTimeout(() => {
+        note.textContent = espAvailable ? 'ESP32 spojen' : 'ESP32 nije dostupan';
+      }, 4000);
+    }
+  } catch(e) {}
+}
+
+// ── Klik na glavni gumb ───────────────────────────────────────────────────────
+function handleClick() {
+  if (!client || !espAvailable) return;
+  if (barrierState === 'MOVING' || barrierState === 'FAULT' || barrierState === 'UNKNOWN') return;
+
+  const cmd = barrierState === 'OPEN' ? 'ZATVORI' : 'OTVORI';
+  lastCmdDir = cmd === 'ZATVORI' ? 'close' : 'open';
+  client.publish(TOPIC_CMD, cmd, { qos: 1 });
+
+  const now = new Date();
+  const ts  = now.toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+  const ds  = now.toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit' });
+  document.getElementById('lastAction').textContent =
+    (cmd === 'ZATVORI' ? 'Zatvaranje' : 'Otvaranje') + ' — ' + currentUser + '  ' + ds + ' ' + ts;
+}
+
+function sendResetFault() {
+  if (!client || currentRole !== 'admin') return;
+  client.publish(TOPIC_CMD, 'RESET_FAULT', { qos: 1 });
+  document.getElementById('alarmBanner').classList.remove('show');
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function updateUI() {
+  const btn    = document.getElementById('mainBtn');
+  const arrow  = document.getElementById('arrow');
+  const label  = document.getElementById('btnLabel');
+  const status = document.getElementById('statusText');
+  const note   = document.getElementById('statusNote');
+  const ring   = document.getElementById('ringFg');
+  const rfBtn  = document.getElementById('resetFaultBtn');
+
+  btn.classList.remove('state-open','state-closed','state-moving','state-fault','state-unknown');
+  rfBtn.classList.remove('show');
+
+  note.textContent = espAvailable ? 'ESP32 spojen' : 'ESP32 nije dostupan';
+
+  if (barrierState === 'OPEN') {
+    btn.classList.add('state-open'); btn.disabled = !espAvailable;
+    arrow.className = 'arrow open'; arrow.textContent = '↑';
+    label.className = 'btn-label open'; label.textContent = 'ZATVORI';
+    status.className = 'status-text open'; status.textContent = 'BARIJERA JE OTVORENA';
+    ring.className = 'ring-fg'; ring.style.strokeDasharray = '0 754';
+
+  } else if (barrierState === 'CLOSED') {
+    btn.classList.add('state-closed'); btn.disabled = !espAvailable;
+    arrow.className = 'arrow closed'; arrow.textContent = '↓';
+    label.className = 'btn-label closed'; label.textContent = 'OTVORI';
+    status.className = 'status-text closed'; status.textContent = 'BARIJERA JE ZATVORENA';
+    ring.className = 'ring-fg closed'; ring.style.strokeDasharray = '754 754';
+
+  } else if (barrierState === 'MOVING') {
+    btn.classList.add('state-moving'); btn.disabled = true;
+    const goingUp = lastCmdDir === 'close';
+    arrow.className = goingUp ? 'arrow moving-up' : 'arrow moving-down';
+    arrow.textContent = goingUp ? '↑' : '↓';
+    label.className = 'btn-label moving';
+    label.textContent = goingUp ? 'LANAC SE PODIŽE' : 'LANAC SE SPUŠTA';
+    status.className = 'status-text moving'; status.textContent = 'U POKRETU...';
+    ring.className = 'ring-fg moving'; ring.style.strokeDasharray = '377 754';
+
+  } else if (barrierState === 'FAULT') {
+    btn.classList.add('state-fault'); btn.disabled = true;
+    arrow.className = 'arrow fault'; arrow.textContent = '⚠';
+    label.className = 'btn-label fault'; label.textContent = 'GREŠKA';
+    status.className = 'status-text fault'; status.textContent = 'SUSTAV U GREŠCI';
+    ring.className = 'ring-fg fault'; ring.style.strokeDasharray = '377 754';
+    if (currentRole === 'admin') rfBtn.classList.add('show');
+
+  } else {
+    // UNKNOWN ili null
+    btn.classList.add('state-unknown'); btn.disabled = true;
+    arrow.className = 'arrow unknown'; arrow.textContent = '?';
+    label.className = 'btn-label unknown'; label.textContent = 'NEPOZNATO';
+    status.className = 'status-text unknown'; status.textContent = 'STANJE NEPOZNATO';
+    ring.className = 'ring-fg unknown'; ring.style.strokeDasharray = '0 754';
+  }
+}
+
+function setDot(state) {
+  document.getElementById('topDot').className = 'top-dot ' + state;
+  const note = document.getElementById('statusNote');
+  if (state === 'connecting') note.textContent = 'Spajanje na MQTT...';
+  if (state === 'offline')    note.textContent = 'MQTT veza prekinuta';
+  if (state !== 'online') document.getElementById('mainBtn').disabled = true;
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
@@ -375,184 +542,56 @@ async function addUser() {
   const p = document.getElementById('newPass').value;
   const r = document.getElementById('newRole').value;
   const errEl = document.getElementById('adminErr');
-  const okEl = document.getElementById('adminOk');
-
-  errEl.classList.remove('show');
-  okEl.classList.remove('show');
-
+  const okEl  = document.getElementById('adminOk');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
   if (!u || !p) { errEl.textContent = 'Upiši korisničko ime i lozinku'; errEl.classList.add('show'); return; }
   if (users[u]) { errEl.textContent = 'Korisnik već postoji'; errEl.classList.add('show'); return; }
-
   const hash = await sha256(p);
   users[u] = { hash, role: r };
   localStorage.setItem('barrier_users', JSON.stringify(users));
-
   document.getElementById('newUser').value = '';
   document.getElementById('newPass').value = '';
-  okEl.textContent = `Korisnik "${u}" dodan. Generiraj JSON i spremi na GitHub.`;
+  okEl.textContent = `Korisnik "${u}" dodan. Spremi na GitHub.`;
   okEl.classList.add('show');
   renderUserList();
 }
 
 function deleteUser(name) {
+  const errEl = document.getElementById('adminErr');
+  const okEl  = document.getElementById('adminOk');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
   if (name === currentUser) {
-    document.getElementById('adminErr').textContent = 'Ne možeš obrisati sebe!';
-    document.getElementById('adminErr').classList.add('show');
-    return;
+    errEl.textContent = 'Ne možeš obrisati sebe!';
+    errEl.classList.add('show'); return;
   }
   delete users[name];
   localStorage.setItem('barrier_users', JSON.stringify(users));
   renderUserList();
-  document.getElementById('adminOk').textContent = `Korisnik "${name}" obrisan. Generiraj JSON i spremi na GitHub.`;
-  document.getElementById('adminOk').classList.add('show');
+  okEl.textContent = `Korisnik "${name}" obrisan. Spremi na GitHub.`;
+  okEl.classList.add('show');
 }
-
-function generateJson() {
-  const json = JSON.stringify(users, null, 2);
-  const el = document.getElementById('jsonOutput');
-  el.textContent = json;
-  el.classList.add('show');
-  document.getElementById('copyBtn').style.display = 'block';
-}
-
-function copyJson() {
-  const text = document.getElementById('jsonOutput').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    document.getElementById('adminOk').textContent = 'Kopirano! Spremi kao users.json na GitHub.';
-    document.getElementById('adminOk').classList.add('show');
-  });
-}
-
-// ── MQTT ──────────────────────────────────────────────────────────────────────
-function connectMQTT() {
-  setDot('connecting');
-  const clientId = 'pwa_' + Math.random().toString(36).substr(2, 9);
-
-  client = mqtt.connect(`wss://${EMQX_HOST}:${EMQX_PORT}/mqtt`, {
-    clientId,
-    username: EMQX_USER,
-    password: EMQX_PASS,
-    clean: true,
-    reconnectPeriod: 3000,
-    connectTimeout: 10000,
-    rejectUnauthorized: false
-  });
-
-  client.on('connect', () => {
-    setDot('online');
-    client.subscribe(TOPIC_STATUS);
-  });
-
-  client.on('message', (topic, payload) => {
-    if (topic === TOPIC_STATUS) handleStatus(payload.toString());
-  });
-
-  client.on('error', () => setDot('offline'));
-  client.on('offline', () => setDot('offline'));
-  client.on('reconnect', () => setDot('connecting'));
-}
-
-function handleStatus(status) {
-  barrierState = status;
-  updateUI();
-}
-
-function handleClick() {
-  if (isMoving || !client) return;
-  if (barrierState === 'MOVING') return;
-
-  const cmd = barrierState === 'OPEN' ? 'ZATVORI' : 'OTVORI';
-  client.publish(TOPIC_CMD, cmd, { qos: 1 });
-
-  const now = new Date();
-  const ts = now.toLocaleTimeString('hr-HR', {hour:'2-digit', minute:'2-digit'});
-  const ds = now.toLocaleDateString('hr-HR', {day:'2-digit', month:'2-digit'});
-  document.getElementById('lastAction').textContent =
-    (cmd === 'ZATVORI' ? 'Zatvaranje' : 'Otvaranje') + ' — ' + currentUser + '  ' + ds + ' ' + ts;
-}
-
-function updateUI() {
-  const btn    = document.getElementById('mainBtn');
-  const arrow  = document.getElementById('arrow');
-  const label  = document.getElementById('btnLabel');
-  const status = document.getElementById('statusText');
-  const ring   = document.getElementById('ringFg');
-
-  btn.classList.remove('state-open', 'state-closed', 'state-moving');
-
-  if (barrierState === 'OPEN') {
-    btn.classList.add('state-open'); btn.disabled = false;
-    arrow.className = 'arrow open'; arrow.textContent = '↑';
-    label.className = 'btn-label open'; label.textContent = 'ZATVORI';
-    status.className = 'status-text open'; status.textContent = 'BARIJERA JE OTVORENA';
-    ring.className = 'ring-fg'; ring.style.strokeDasharray = '0 754';
-    isMoving = false;
-  } else if (barrierState === 'CLOSED') {
-    btn.classList.add('state-closed'); btn.disabled = false;
-    arrow.className = 'arrow closed'; arrow.textContent = '↓';
-    label.className = 'btn-label closed'; label.textContent = 'OTVORI';
-    status.className = 'status-text closed'; status.textContent = 'BARIJERA JE ZATVORENA';
-    ring.className = 'ring-fg closed'; ring.style.strokeDasharray = '754 754';
-    isMoving = false;
-  } else if (barrierState === 'MOVING') {
-    btn.classList.add('state-moving'); btn.disabled = true;
-    arrow.className = 'arrow moving-up'; arrow.textContent = '↑';
-    label.className = 'btn-label moving'; label.textContent = 'LANAC SE PODIŽE';
-    status.className = 'status-text moving'; status.textContent = 'U POKRETU...';
-    ring.className = 'ring-fg moving';
-    isMoving = true;
-  }
-}
-
-function setDot(state) {
-  const d = document.getElementById('topDot');
-  d.className = 'top-dot ' + state;
-  document.getElementById('mainBtn').disabled = state !== 'online' || barrierState === 'MOVING';
-}
-
-// ── Auto-login ────────────────────────────────────────────────────────────────
-window.addEventListener('load', async () => {
-  await loadUsers();
-  const u = localStorage.getItem('barrier_user');
-  const h = localStorage.getItem('barrier_hash');
-  if (u && h && users[u] && users[u].hash === h) {
-    currentUser = u;
-    currentRole = users[u].role || 'user';
-    showApp();
-    connectMQTT();
-  }
-});
-
 
 async function saveToGithub() {
   const token = document.getElementById('ghToken').value.trim();
-  const okEl = document.getElementById('adminOk');
+  const okEl  = document.getElementById('adminOk');
   const errEl = document.getElementById('adminErr');
-  okEl.classList.remove('show');
-  errEl.classList.remove('show');
+  okEl.classList.remove('show'); errEl.classList.remove('show');
+  if (!token) { errEl.textContent = 'Upiši GitHub token!'; errEl.classList.add('show'); return; }
 
-  if (!token) {
-    errEl.textContent = 'Upiši GitHub token!';
-    errEl.classList.add('show');
-    return;
-  }
-
-  const owner = 'boriss2808';
-  const repo  = 'barijera_esp';
-  const path  = 'users.json';
+  const owner  = 'boriss2808';
+  const repo   = 'barijera_esp';
+  const path   = 'users.json';
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
-  // Dohvati SHA trenutne datoteke
   let sha = '';
   try {
     const r = await fetch(apiUrl, { headers: { 'Authorization': 'token ' + token } });
     if (r.ok) { const d = await r.json(); sha = d.sha; }
   } catch(e) {}
 
-  const json = JSON.stringify(users, null, 2);
+  const json      = JSON.stringify(users, null, 2);
   const content64 = btoa(unescape(encodeURIComponent(json)));
-
-  const body = { message: 'Ažuriraj korisnike', content: content64 };
+  const body      = { message: 'Ažuriraj korisnike', content: content64 };
   if (sha) body.sha = sha;
 
   try {
@@ -575,6 +614,19 @@ async function saveToGithub() {
     errEl.classList.add('show');
   }
 }
+
+// ── Auto-login ────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  await loadUsers();
+  const u = localStorage.getItem('barrier_user');
+  const h = localStorage.getItem('barrier_hash');
+  if (u && h && users[u] && users[u].hash === h) {
+    currentUser = u;
+    currentRole = users[u].role || 'user';
+    showApp();
+    connectMQTT();
+  }
+});
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
