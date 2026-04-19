@@ -10,5 +10,9 @@
   "b": {
     "hash": "7dc96f776c8423e57a2785489a3f9c43fb6e756876d6ad9a9cac4aa4e72ec193",
     "role": "admin"
+  },
+  "c": {
+    "hash": "d0f631ca1ddba8db3bcfcb9e057cdc98d0379f1bee00e75a545147a27dadd982",
+    "role": "user"
   }
 }
