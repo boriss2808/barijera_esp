@@ -3,8 +3,12 @@
     "hash": "937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244",
     "role": "admin"
   },
-  "prvi": {
-    "hash": "9ec2eb39a82131bb13157cd4eefe219aecf4f0190bde4565d30a93ab64482daa",
-    "role": "user"
+  "a": {
+    "hash": "f55ff16f66f43360266b95db6f8fec01d76031054306ae4a4b380598f6cfd114",
+    "role": "admin"
+  },
+  "b": {
+    "hash": "7dc96f776c8423e57a2785489a3f9c43fb6e756876d6ad9a9cac4aa4e72ec193",
+    "role": "admin"
   }
 }
