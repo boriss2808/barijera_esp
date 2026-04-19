@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Barijera</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#f0f2f0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Barijera">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.0.5/mqtt.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #0d0d0d; --surface: #161616; --border: #252525; --border2: #333;
-  --text: #efefef; --text2: #777; --text3: #444;
-  --open: #4ade80; --closed: #60a5fa; --moving: #fbbf24;
-  --fault: #f87171; --unknown: #888; --alarm: #ff6b35;
-  --admin: #c084fc;
+  --bg: #f0f2f0; --surface: #ffffff; --border: #dde3dd; --border2: #c8d4c8;
+  --text: #1a2a1a; --text2: #5a7a5a; --text3: #8aaa8a;
+  --open: #16a34a; --closed: #2563eb; --moving: #d97706;
+  --fault: #dc2626; --unknown: #6b7280; --alarm: #ea580c;
+  --admin: #7c3aed;
 }
 body {
   background: var(--bg); color: var(--text);
@@ -29,7 +29,7 @@ body::before {
   content: ''; position: fixed; inset: 0;
   background-image: linear-gradient(var(--border) 1px, transparent 1px),
     linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 48px 48px; opacity: 0.2; pointer-events: none;
+  background-size: 48px 48px; opacity: 0.6; pointer-events: none;
 }
 
 .card {
@@ -46,8 +46,8 @@ body::before {
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); font-family: monospace; }
 .field input {
-  background: #1e1e1e; border: 1px solid var(--border2); border-radius: 8px;
-  color: var(--text); font-family: monospace; font-size: 13px;
+  background: #f8faf8; border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); font-family: monospace; font-size: 13px; color: #1a2a1a;
   padding: 11px 14px; outline: none; width: 100%; transition: border-color 0.2s;
 }
 .field input:focus { border-color: #555; }
@@ -185,7 +185,7 @@ body::before {
 .user-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
 .user-item {
   display: flex; align-items: center; justify-content: space-between;
-  background: #1e1e1e; border: 1px solid var(--border2); border-radius: 8px;
+  background: #f8faf8; border: 1px solid var(--border2); border-radius: 8px;
   padding: 10px 14px; font-family: monospace; font-size: 12px;
 }
 .user-item .user-name { color: var(--text); }
@@ -267,7 +267,7 @@ body::before {
     <input type="password" id="newPass" placeholder="••••••••">
   </div>
   <div style="display:flex;gap:8px;">
-    <select id="newRole" style="flex:1;background:#1e1e1e;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:monospace;font-size:12px;padding:11px 14px;outline:none;">
+    <select id="newRole" style="flex:1;background:#f8faf8;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:monospace;font-size:12px;padding:11px 14px;outline:none;">
       <option value="user">Korisnik</option>
       <option value="admin">Admin</option>
     </select>
