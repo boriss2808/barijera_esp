@@ -1,194 +1,678 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="hr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Barijera PWA Simulator</title>
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="manifest" href="./manifest.json" />
-  <style>
-    :root { --bg:#0b1220; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#22c55e; --warn:#f59e0b; --danger:#ef4444; }
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#020617,#0f172a);color:var(--text)}
-    .wrap{max-width:760px;margin:0 auto;padding:20px}
-    .card{background:rgba(17,24,39,.9);border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    h1{font-size:1.25rem;margin:0 0 8px} p{color:var(--muted);line-height:1.45}
-    .grid{display:grid;gap:12px}.grid2{grid-template-columns:1fr 1fr}
-    @media (max-width:700px){.grid2{grid-template-columns:1fr}}
-    label{display:block;font-size:.9rem;color:var(--muted);margin-bottom:6px}
-    input,select,button{width:100%;border-radius:12px;border:1px solid rgba(148,163,184,.25);background:#0b1220;color:var(--text);padding:12px 14px;font-size:1rem}
-    button{cursor:pointer}
-    .main-btn{font-size:1.25rem;font-weight:700;padding:18px}
-    .state{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#0b1220;border:1px solid rgba(148,163,184,.2);font-weight:600}
-    .dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
-    .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
-    .log{background:#020617;border-radius:12px;padding:12px;min-height:180px;max-height:280px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:.9rem;white-space:pre-wrap}
-    .accent{color:var(--accent)} .warn{color:var(--warn)} .danger{color:var(--danger)}
-    .small{font-size:.85rem;color:var(--muted)}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Barijera</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f0f2f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Barijera">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.0.5/mqtt.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f2f0; --surface: #ffffff; --border: #dde3dd; --border2: #c8d4c8;
+  --text: #1a2a1a; --text2: #5a7a5a; --text3: #8aaa8a;
+  --open: #16a34a; --closed: #2563eb; --moving: #d97706;
+  --fault: #dc2626; --unknown: #6b7280; --alarm: #ea580c;
+  --admin: #7c3aed;
+}
+body {
+  background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px; opacity: 0.6; pointer-events: none;
+}
+
+.card {
+  position: relative; z-index: 1;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 32px 28px;
+  width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.card-title {
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text2); text-align: center; font-family: monospace;
+}
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); font-family: monospace; }
+.field input {
+  background: #f8faf8; border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); font-family: monospace; font-size: 13px; color: #1a2a1a;
+  padding: 11px 14px; outline: none; width: 100%; transition: border-color 0.2s;
+}
+.field input:focus { border-color: #555; }
+.field input::placeholder { color: var(--text3); }
+
+.btn {
+  border-radius: 8px; font-family: monospace; font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 13px; cursor: pointer; transition: all 0.15s; border: 1px solid;
+}
+.btn-green  { background: #1a4a2e; border-color: #22633e; color: var(--open); }
+.btn-green:hover  { background: #1f5c38; }
+.btn-blue   { background: #1a2a4a; border-color: #22396e; color: var(--closed); }
+.btn-blue:hover   { background: #1f3560; }
+.btn-purple { background: #2a1a4a; border-color: #6e22a0; color: var(--admin); }
+.btn-purple:hover { background: #341f5c; }
+.btn-red    { background: #4a1a1a; border-color: #8b2222; color: var(--fault); }
+.btn-red:hover    { background: #5c1f1f; }
+.btn-ghost  { background: transparent; border-color: var(--border2); color: var(--text2); }
+.btn-ghost:hover  { border-color: #555; color: var(--text); }
+
+.err { font-family: monospace; font-size: 11px; color: var(--fault); text-align: center; display: none; }
+.err.show { display: block; }
+.ok  { font-family: monospace; font-size: 11px; color: var(--open);  text-align: center; display: none; }
+.ok.show  { display: block; }
+
+/* ── Login ── */
+#loginWrap { display: flex; }
+
+/* ── App ── */
+#appWrap {
+  display: none; flex-direction: column; align-items: center; gap: 0;
+  width: 100%; max-width: 360px; position: relative; z-index: 1;
+}
+.top {
+  font-family: monospace; font-size: 10px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 40px; display: flex; align-items: center;
+  justify-content: space-between; width: 100%;
+}
+.top-left { display: flex; align-items: center; gap: 8px; }
+.top-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); transition: all 0.3s; }
+.top-dot.online     { background: var(--open);  box-shadow: 0 0 6px var(--open); }
+.top-dot.offline    { background: var(--fault); box-shadow: 0 0 6px var(--fault); }
+.top-dot.connecting { background: var(--text3); animation: blink 1s ease-in-out infinite; }
+.top-actions { display: flex; gap: 12px; }
+.top-link { color: var(--text3); cursor: pointer; font-size: 10px; letter-spacing: 0.08em; }
+.top-link:hover { color: var(--text2); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── Alarm banner ── */
+#alarmBanner {
+  display: none; width: 100%;
+  background: #3a1a0a; border: 1px solid var(--alarm);
+  border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+  font-family: monospace; font-size: 10px; letter-spacing: 0.08em;
+  color: var(--alarm); text-align: center; text-transform: uppercase;
+  animation: pulse-alarm 1.5s ease-in-out infinite;
+}
+#alarmBanner.show { display: block; }
+@keyframes pulse-alarm {
+  0%,100%{ border-color: var(--alarm); }
+  50%{ border-color: transparent; }
+}
+
+/* ── Glavni gumb ── */
+.main-btn {
+  width: 220px; height: 220px; border-radius: 50%;
+  border: 1.5px solid var(--border2); background: var(--surface);
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  position: relative; transition: border-color 0.3s, transform 0.1s;
+  outline: none; -webkit-tap-highlight-color: transparent;
+}
+.main-btn:hover { border-color: #555; }
+.main-btn:active { transform: scale(0.97); }
+.main-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.main-btn.state-open    { border-color: var(--open); }
+.main-btn.state-closed  { border-color: var(--closed); }
+.main-btn.state-moving  { border-color: var(--moving); animation: pulse-moving 1s ease-in-out infinite; }
+.main-btn.state-fault   { border-color: var(--fault);  animation: pulse-fault  1s ease-in-out infinite; }
+.main-btn.state-unknown { border-color: var(--unknown); }
+@keyframes pulse-moving {
+  0%,100%{ box-shadow: 0 0 0 0 rgba(251,191,36,0); }
+  50%{ box-shadow: 0 0 0 14px rgba(251,191,36,0.07); }
+}
+@keyframes pulse-fault {
+  0%,100%{ box-shadow: 0 0 0 0 rgba(248,113,113,0); }
+  50%{ box-shadow: 0 0 0 14px rgba(248,113,113,0.1); }
+}
+@keyframes bounce-up   { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-8px)} }
+@keyframes bounce-down { 0%,100%{transform:translateY(0)} 40%{transform:translateY( 8px)} }
+
+.progress-ring { position: absolute; inset: -8px; width: calc(100% + 16px); height: calc(100% + 16px); transform: rotate(-90deg); pointer-events: none; }
+.ring-bg { fill: none; stroke: var(--border); stroke-width: 2; }
+.ring-fg { fill: none; stroke-width: 2; stroke-linecap: round; stroke: var(--open); stroke-dasharray: 0 754; transition: stroke 0.3s; }
+.ring-fg.closed  { stroke: var(--closed); }
+.ring-fg.moving  { stroke: var(--moving); }
+.ring-fg.fault   { stroke: var(--fault); }
+.ring-fg.unknown { stroke: var(--unknown); }
+
+.arrow { font-size: 72px; line-height: 1; user-select: none; transition: color 0.3s; }
+.arrow.open        { color: var(--open); }
+.arrow.closed      { color: var(--closed); }
+.arrow.moving-up   { color: var(--moving); animation: bounce-up   0.8s ease-in-out infinite; }
+.arrow.moving-down { color: var(--moving); animation: bounce-down 0.8s ease-in-out infinite; }
+.arrow.fault       { color: var(--fault); }
+.arrow.unknown     { color: var(--unknown); }
+
+.btn-label { font-family: monospace; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; transition: color 0.3s; }
+.btn-label.open    { color: var(--open); }
+.btn-label.closed  { color: var(--closed); }
+.btn-label.moving  { color: var(--moving); }
+.btn-label.fault   { color: var(--fault); }
+.btn-label.unknown { color: var(--unknown); }
+
+.status-area { margin-top: 40px; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.status-text { font-size: 18px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2); transition: color 0.3s; text-align: center; }
+.status-text.open    { color: var(--open); }
+.status-text.closed  { color: var(--closed); }
+.status-text.moving  { color: var(--moving); }
+.status-text.fault   { color: var(--fault); }
+.status-text.unknown { color: var(--unknown); }
+.status-note { font-family: monospace; font-size: 10px; color: var(--text3); letter-spacing: 0.06em; text-align: center; }
+
+#resetFaultBtn { display: none; margin-top: 16px; width: 100%; max-width: 220px; }
+#resetFaultBtn.show { display: block; }
+
+.last-action { margin-top: 20px; font-family: monospace; font-size: 10px; color: var(--text3); text-align: center; letter-spacing: 0.06em; }
+
+/* ── Admin ── */
+#adminWrap { display: none; }
+.admin-header { display: flex; align-items: center; justify-content: space-between; }
+.admin-header span { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--admin); font-family: monospace; }
+.user-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+.user-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #f8faf8; border: 1px solid var(--border2); border-radius: 8px;
+  padding: 10px 14px; font-family: monospace; font-size: 12px;
+}
+.user-item .user-name { color: var(--text); }
+.user-item .user-role { font-size: 10px; color: var(--text3); margin-left: 8px; }
+.user-del { background: none; border: none; color: var(--fault); cursor: pointer; font-size: 16px; padding: 0 4px; opacity: 0.6; }
+.user-del:hover { opacity: 1; }
+.divider { border: none; border-top: 1px solid var(--border2); margin: 4px 0; }
+
+/* ── Sim log ── */
+#simLog {
+  margin-top: 16px; width: 100%; max-width: 360px;
+  background: #f8faf8; border: 1px solid var(--border2);
+  border-radius: 8px; padding: 10px 12px;
+  font-family: monospace; font-size: 9px; color: var(--text3);
+  letter-spacing: 0.04em; max-height: 80px; overflow-y: auto;
+  display: none; position: relative; z-index: 1;
+}
+#simLog.show { display: block; }
+#simLog .sim-line { padding: 1px 0; border-bottom: 1px solid var(--border); }
+#simLog .sim-line:last-child { border-bottom: none; }
+#simLog .sim-ok   { color: var(--open); }
+#simLog .sim-move { color: var(--moving); }
+#simLog .sim-info { color: var(--text3); }
+</style>
 </head>
 <body>
-<div class="wrap grid" style="gap:16px">
-  <div class="card">
-    <h1>Barijera PWA simulator</h1>
-    <p>Početno stanje je <strong>CLOSED</strong>. Klik na glavnu tipku šalje MQTT komandu, simulira impuls od 1 s na paru releja, a nakon 10 s mijenja stanje tipke.</p>
-    <div class="row" style="align-items:center">
-      <div class="state" id="stateBadge"><span class="dot" id="stateDot"></span><span id="stateText">CLOSED</span></div>
-      <div class="small" id="connText">MQTT: nije spojeno</div>
-    </div>
-  </div>
 
-  <div class="card grid grid2">
-    <div>
-      <label for="wsUrl">MQTT WebSocket URL</label>
-      <input id="wsUrl" value="wss://xf131e86.ala.eu-central-1.emqxsl.com:8084/mqtt" />
-    </div>
-    <div>
-      <label for="topic">Topic komande</label>
-      <input id="topic" value="barijera/komanda" />
-    </div>
-    <div>
-      <label for="user">Korisničko ime</label>
-      <input id="user" value="esp32" />
-    </div>
-    <div>
-      <label for="pass">Lozinka</label>
-      <input id="pass" type="password" value="esp32pass" />
-    </div>
-    <div class="row" style="grid-column:1 / -1">
-      <button id="connectBtn">Spoji MQTT</button>
-      <button id="disconnectBtn">Prekini vezu</button>
-    </div>
+<!-- Login -->
+<div class="card" id="loginWrap">
+  <div class="card-title">&#128274; Pristup barijeri</div>
+  <div class="field">
+    <label>Korisničko ime</label>
+    <input type="text" id="loginUser" autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="username">
   </div>
-
-  <div class="card grid">
-    <button class="main-btn" id="mainBtn">OTVORI</button>
-    <div class="row">
-      <button id="toggleBtn">TOGGLE</button>
-      <button id="resetBtn">RESET_FAULT</button>
-    </div>
-    <div class="small">Simulacija releja: <span id="relayText">mirovanje</span></div>
+  <div class="field">
+    <label>Lozinka</label>
+    <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
   </div>
-
-  <div class="card">
-    <div class="log" id="log"></div>
-  </div>
+  <button class="btn btn-green" onclick="doLogin()">Prijavi se &rarr;</button>
+  <div class="err" id="loginErr">Pogrešno korisničko ime ili lozinka</div>
 </div>
 
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<!-- App -->
+<div id="appWrap">
+  <div class="top">
+    <div class="top-left">
+      <div class="top-dot connecting" id="topDot"></div>
+      <span id="topUser">Barijera</span>
+    </div>
+    <div class="top-actions">
+      <span class="top-link" id="adminLink" onclick="showAdmin()" style="display:none;color:var(--admin)">ADMIN</span>
+      <span class="top-link" onclick="doLogout()">ODJAVA</span>
+    </div>
+  </div>
+
+  <div id="alarmBanner">&#9888; <span id="alarmText">alarm</span></div>
+
+  <button class="main-btn" id="mainBtn" onclick="handleClick()" disabled>
+    <svg class="progress-ring" viewBox="0 0 252 252">
+      <circle class="ring-bg" cx="126" cy="126" r="120"/>
+      <circle class="ring-fg" id="ringFg" cx="126" cy="126" r="120"/>
+    </svg>
+    <span class="arrow" id="arrow">&#8593;</span>
+    <span class="btn-label" id="btnLabel">spajanje...</span>
+  </button>
+
+  <button class="btn btn-red" id="resetFaultBtn" onclick="sendResetFault()">
+    &#9888; Resetiraj grešku
+  </button>
+
+  <div class="status-area">
+    <div class="status-text" id="statusText">čekam status...</div>
+    <div class="status-note" id="statusNote">Čekam MQTT vezu...</div>
+  </div>
+  <div class="last-action" id="lastAction"></div>
+  <div id="simLog"></div>
+</div>
+
+<!-- Admin -->
+<div class="card" id="adminWrap">
+  <div class="admin-header">
+    <span>&#9881; Korisnici</span>
+    <button class="btn btn-ghost" style="padding:6px 12px;font-size:10px;" onclick="showApp()">&#8592; natrag</button>
+  </div>
+
+  <div class="user-list" id="userList"></div>
+  <hr class="divider">
+
+  <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Dodaj korisnika</div>
+  <div class="field">
+    <label>Korisničko ime</label>
+    <input type="text" id="newUser" autocomplete="off" autocapitalize="none" placeholder="username">
+  </div>
+  <div class="field">
+    <label>Lozinka</label>
+    <input type="password" id="newPass" placeholder="••••••••">
+  </div>
+  <div style="display:flex;gap:8px;">
+    <select id="newRole" style="flex:1;background:#f8faf8;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:monospace;font-size:12px;padding:11px 14px;outline:none;">
+      <option value="user">Korisnik</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button class="btn btn-purple" style="flex:2;" onclick="addUser()">Dodaj</button>
+  </div>
+  <div class="err" id="adminErr"></div>
+  <div class="ok"  id="adminOk"></div>
+  <hr class="divider">
+
+  <div style="font-size:10px;color:var(--text3);font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;">Spremi na GitHub</div>
+  <div class="field">
+    <label>GitHub Token</label>
+    <input type="password" id="ghToken" placeholder="ghp_..." autocomplete="off">
+  </div>
+  <button class="btn btn-blue" onclick="saveToGithub()">Spremi users.json na GitHub</button>
+</div>
+
 <script>
-(() => {
-  const els = id => document.getElementById(id);
-  const state = {
-    barrier: 'CLOSED',
-    moving: false,
-    client: null,
-    topic: 'barijera/komanda',
-    timer: null,
-    pulseTimer: null,
-  };
+// ── Konfiguracija ─────────────────────────────────────────────────────────────
+const EMQX_HOST          = "xf131e86.ala.eu-central-1.emqxsl.com";
+const EMQX_PORT          = 8084;
+const TOPIC_CMD          = "barijera/komanda";
+const TOPIC_STATUS       = "barijera/status";
+const TOPIC_AVAILABILITY = "barijera/availability";
+const TOPIC_ALARM        = "barijera/alarm";
+const TOPIC_ACK          = "barijera/ack";
 
-  const log = (msg, cls='') => {
-    const line = `[${new Date().toLocaleTimeString('hr-HR')}] ${msg}`;
-    const div = document.createElement('div');
-    if (cls) div.className = cls;
-    div.textContent = line;
-    els('log').prepend(div);
-  };
+const USERS_URL = "https://raw.githubusercontent.com/boriss2808/barijera_esp/main/users.json";
+const EMQX_USER = "pwa_barijera";
+const EMQX_PASS = "pwa1234";
 
-  const render = () => {
-    const st = state.barrier;
-    els('stateText').textContent = st;
-    els('stateDot').style.background = st === 'OPEN' ? '#22c55e' : st === 'CLOSED' ? '#94a3b8' : '#f59e0b';
-    els('mainBtn').disabled = state.moving;
-    els('mainBtn').textContent = st === 'CLOSED' ? 'OTVORI' : st === 'OPEN' ? 'ZATVORI' : 'U TIJEKU…';
-    els('relayText').textContent = state.moving
-      ? (state.target === 'OPEN' ? 'impuls RELAY_DOWN_1 + RELAY_DOWN_2 (1 s)' : 'impuls RELAY_UP_1 + RELAY_UP_2 (1 s)')
-      : 'mirovanje';
-  };
+// ── State ─────────────────────────────────────────────────────────────────────
+let client       = null;
+let currentUser  = null;
+let currentRole  = null;
+let barrierState = null;
+let espAvailable = false;
+let lastCmdDir   = null; // 'open' | 'close'
+let users        = {};
 
-  const publish = (payload) => {
-    const topic = els('topic').value.trim() || 'barijera/komanda';
-    state.topic = topic;
-    if (state.client && state.client.connected) {
-      state.client.publish(topic, payload);
-      log(`MQTT publish → ${topic} : ${payload}`, 'accent');
-    } else {
-      log(`Lokalna simulacija bez MQTT veze → ${payload}`, 'warn');
+// ── Hash ──────────────────────────────────────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Učitaj korisnike s GitHuba ────────────────────────────────────────────────
+async function loadUsers() {
+  try {
+    const r = await fetch(USERS_URL + '?t=' + Date.now());
+    if (r.ok) { users = await r.json(); return true; }
+  } catch(e) {}
+  const local = localStorage.getItem('barrier_users');
+  if (local) { users = JSON.parse(local); return true; }
+  return false;
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (!u || !p) return;
+  await loadUsers();
+  const hash = await sha256(p);
+  if (!users[u] || users[u].hash !== hash) {
+    document.getElementById('loginErr').classList.add('show');
+    return;
+  }
+  currentUser = u;
+  currentRole = users[u].role || 'user';
+  localStorage.setItem('barrier_user', u);
+  localStorage.setItem('barrier_hash', hash);
+  showApp();
+  connectMQTT();
+}
+
+function doLogout() {
+  if (client) client.end();
+  localStorage.removeItem('barrier_user');
+  localStorage.removeItem('barrier_hash');
+  currentUser = null; currentRole = null;
+  barrierState = null; espAvailable = false; lastCmdDir = null;
+  document.getElementById('appWrap').style.display   = 'none';
+  document.getElementById('adminWrap').style.display = 'none';
+  document.getElementById('loginWrap').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').classList.remove('show');
+}
+
+function showApp() {
+  document.getElementById('loginWrap').style.display  = 'none';
+  document.getElementById('adminWrap').style.display  = 'none';
+  document.getElementById('appWrap').style.display    = 'flex';
+  document.getElementById('topUser').textContent      = currentUser;
+  document.getElementById('adminLink').style.display  = currentRole === 'admin' ? 'block' : 'none';
+}
+
+function showAdmin() {
+  if (currentRole !== 'admin') return;
+  document.getElementById('appWrap').style.display   = 'none';
+  document.getElementById('adminWrap').style.display = 'flex';
+  renderUserList();
+}
+
+// ── MQTT ──────────────────────────────────────────────────────────────────────
+function connectMQTT() {
+  setDot('connecting');
+  const clientId = 'pwa_' + Math.random().toString(36).substr(2, 9);
+  client = mqtt.connect(`wss://${EMQX_HOST}:${EMQX_PORT}/mqtt`, {
+    clientId, username: EMQX_USER, password: EMQX_PASS,
+    clean: true, reconnectPeriod: 3000, connectTimeout: 10000,
+    rejectUnauthorized: false
+  });
+  client.on('connect', () => {
+    setDot('online');
+    client.subscribe(TOPIC_STATUS);
+    client.subscribe(TOPIC_AVAILABILITY);
+    client.subscribe(TOPIC_ALARM);
+    client.subscribe(TOPIC_ACK);
+  });
+  client.on('message', (topic, payload) => {
+    const msg = payload.toString();
+    if (topic === TOPIC_STATUS)       handleStatus(msg);
+    if (topic === TOPIC_AVAILABILITY) handleAvailability(msg);
+    if (topic === TOPIC_ALARM)        handleAlarm(msg);
+    if (topic === TOPIC_ACK)          handleAck(msg);
+  });
+  client.on('error',     () => setDot('offline'));
+  client.on('offline',   () => setDot('offline'));
+  client.on('reconnect', () => setDot('connecting'));
+}
+
+// ── Handlers ──────────────────────────────────────────────────────────────────
+function handleStatus(status) {
+  if (status !== barrierState) {
+    if (status === 'OPEN')   simLog('Status: BARIJERA OTVORENA', 'sim-ok');
+    if (status === 'CLOSED') simLog('Status: BARIJERA ZATVORENA', 'sim-ok');
+    if (status === 'MOVING') simLog('Status: U POKRETU...', 'sim-move');
+  }
+  barrierState = status;
+  updateUI();
+}
+
+function handleAvailability(msg) {
+  espAvailable = (msg === 'online');
+  updateUI();
+}
+
+function handleAlarm(msg) {
+  const banner = document.getElementById('alarmBanner');
+  document.getElementById('alarmText').textContent = msg.replace(/_/g, ' ');
+  banner.classList.add('show');
+  setTimeout(() => { banner.classList.remove('show'); }, 30000);
+}
+
+function handleAck(msg) {
+  try {
+    const data = JSON.parse(msg);
+    if (data.result) {
+      const note = document.getElementById('statusNote');
+      note.textContent = data.result.replace(/_/g, ' ');
+      setTimeout(() => {
+        note.textContent = espAvailable ? 'ESP32 spojen' : 'ESP32 nije dostupan';
+      }, 4000);
     }
-  };
+  } catch(e) {}
+}
 
-  const simulateMove = (target) => {
-    if (state.moving) return;
-    state.moving = true;
-    state.target = target;
-    state.barrier = 'MOVING';
-    render();
-    log(target === 'OPEN'
-      ? 'Impuls 1 s: RELAY_DOWN_1 + RELAY_DOWN_2'
-      : 'Impuls 1 s: RELAY_UP_1 + RELAY_UP_2', 'accent');
+// ── Klik na glavni gumb ───────────────────────────────────────────────────────
+function handleClick() {
+  if (!client || !espAvailable) return;
+  if (barrierState === 'MOVING' || barrierState === 'FAULT' || barrierState === 'UNKNOWN') return;
 
-    clearTimeout(state.pulseTimer);
-    state.pulseTimer = setTimeout(() => {
-      els('relayText').textContent = 'releji otpusteni; cekam 10 s zavrsetak simulacije';
-      log('Impuls zavrsio; releji su ponovno otpusteni', 'small');
-    }, 1000);
+  const cmd = barrierState === 'OPEN' ? 'ZATVORI' : 'OTVORI';
+  lastCmdDir = cmd === 'ZATVORI' ? 'close' : 'open';
+  client.publish(TOPIC_CMD, cmd, { qos: 1 });
 
-    clearTimeout(state.timer);
-    state.timer = setTimeout(() => {
-      state.moving = false;
-      state.barrier = target;
-      render();
-      log(`Simulacija zavrsena → stanje ${target}`, 'accent');
-    }, 10000);
-  };
+  const now = new Date();
+  const ts  = now.toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
+  const ds  = now.toLocaleDateString('hr-HR', { day: '2-digit', month: '2-digit' });
+  document.getElementById('lastAction').textContent =
+    (cmd === 'ZATVORI' ? 'Zatvaranje' : 'Otvaranje') + ' — ' + currentUser + '  ' + ds + ' ' + ts;
 
-  const handleCommand = (cmd) => {
-    if (cmd === 'RESET_FAULT') { publish(cmd); log('RESET_FAULT poslan'); return; }
-    if (state.moving) return;
-    if (cmd === 'TOGGLE') cmd = state.barrier === 'CLOSED' ? 'OTVORI' : 'ZATVORI';
-    publish(cmd);
-    if (cmd === 'OTVORI' && state.barrier === 'CLOSED') simulateMove('OPEN');
-    if (cmd === 'ZATVORI' && state.barrier === 'OPEN') simulateMove('CLOSED');
-  };
+  // Sim log — prati releje
+  if (cmd === 'ZATVORI') {
+    simLog('Komanda: ZATVORI → impuls 1s: RELAY_UP_1 + RELAY_UP_2', 'sim-move');
+    setTimeout(() => simLog('Releji otpušteni — čekam dolazak u CLOSED (10s)', 'sim-info'), 1000);
+  } else {
+    simLog('Komanda: OTVORI → impuls 1s: RELAY_DOWN_1 + RELAY_DOWN_2', 'sim-move');
+    setTimeout(() => simLog('Releji otpušteni — čekam dolazak u OPEN (10s)', 'sim-info'), 1000);
+  }
+}
 
-  els('connectBtn').onclick = () => {
-    if (!window.mqtt) { log('mqtt.js nije ucitan', 'danger'); return; }
-    const url = els('wsUrl').value.trim();
-    const username = els('user').value.trim();
-    const password = els('pass').value;
-    const client = mqtt.connect(url, { username, password, reconnectPeriod: 3000, clean: true });
-    state.client = client;
-    client.on('connect', () => {
-      els('connText').textContent = 'MQTT: spojen';
-      log('MQTT spojen', 'accent');
-      client.subscribe('barijera/status');
+function sendResetFault() {
+  if (!client || currentRole !== 'admin') return;
+  client.publish(TOPIC_CMD, 'RESET_FAULT', { qos: 1 });
+  document.getElementById('alarmBanner').classList.remove('show');
+}
+
+// ── Sim log ───────────────────────────────────────────────────────────────────
+function simLog(msg, cls='sim-info') {
+  const el = document.getElementById('simLog');
+  el.classList.add('show');
+  const line = document.createElement('div');
+  line.className = 'sim-line ' + cls;
+  const ts = new Date().toLocaleTimeString('hr-HR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  line.textContent = '[' + ts + '] ' + msg;
+  el.insertBefore(line, el.firstChild);
+  // Max 10 linija
+  while (el.children.length > 10) el.removeChild(el.lastChild);
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function updateUI() {
+  const btn    = document.getElementById('mainBtn');
+  const arrow  = document.getElementById('arrow');
+  const label  = document.getElementById('btnLabel');
+  const status = document.getElementById('statusText');
+  const note   = document.getElementById('statusNote');
+  const ring   = document.getElementById('ringFg');
+  const rfBtn  = document.getElementById('resetFaultBtn');
+
+  btn.classList.remove('state-open','state-closed','state-moving','state-fault','state-unknown');
+  rfBtn.classList.remove('show');
+
+  note.textContent = espAvailable ? 'ESP32 spojen' : 'ESP32 nije dostupan';
+
+  if (barrierState === 'OPEN') {
+    btn.classList.add('state-open'); btn.disabled = !espAvailable;
+    arrow.className = 'arrow open'; arrow.textContent = '↑';
+    label.className = 'btn-label open'; label.textContent = 'ZATVORI';
+    status.className = 'status-text open'; status.textContent = 'BARIJERA JE OTVORENA';
+    ring.className = 'ring-fg'; ring.style.strokeDasharray = '0 754';
+
+  } else if (barrierState === 'CLOSED') {
+    btn.classList.add('state-closed'); btn.disabled = !espAvailable;
+    arrow.className = 'arrow closed'; arrow.textContent = '↓';
+    label.className = 'btn-label closed'; label.textContent = 'OTVORI';
+    status.className = 'status-text closed'; status.textContent = 'BARIJERA JE ZATVORENA';
+    ring.className = 'ring-fg closed'; ring.style.strokeDasharray = '754 754';
+
+  } else if (barrierState === 'MOVING') {
+    btn.classList.add('state-moving'); btn.disabled = true;
+    const goingUp = lastCmdDir === 'close';
+    arrow.className = goingUp ? 'arrow moving-up' : 'arrow moving-down';
+    arrow.textContent = goingUp ? '↑' : '↓';
+    label.className = 'btn-label moving';
+    label.textContent = goingUp ? 'LANAC SE PODIŽE' : 'LANAC SE SPUŠTA';
+    status.className = 'status-text moving'; status.textContent = 'U POKRETU...';
+    ring.className = 'ring-fg moving'; ring.style.strokeDasharray = '377 754';
+
+  } else if (barrierState === 'FAULT') {
+    btn.classList.add('state-fault'); btn.disabled = true;
+    arrow.className = 'arrow fault'; arrow.textContent = '⚠';
+    label.className = 'btn-label fault'; label.textContent = 'GREŠKA';
+    status.className = 'status-text fault'; status.textContent = 'SUSTAV U GREŠCI';
+    ring.className = 'ring-fg fault'; ring.style.strokeDasharray = '377 754';
+    if (currentRole === 'admin') rfBtn.classList.add('show');
+
+  } else {
+    // UNKNOWN ili null
+    btn.classList.add('state-unknown'); btn.disabled = true;
+    arrow.className = 'arrow unknown'; arrow.textContent = '?';
+    label.className = 'btn-label unknown'; label.textContent = 'NEPOZNATO';
+    status.className = 'status-text unknown'; status.textContent = 'STANJE NEPOZNATO';
+    ring.className = 'ring-fg unknown'; ring.style.strokeDasharray = '0 754';
+  }
+}
+
+function setDot(state) {
+  document.getElementById('topDot').className = 'top-dot ' + state;
+  const note = document.getElementById('statusNote');
+  if (state === 'connecting') note.textContent = 'Spajanje na MQTT...';
+  if (state === 'offline')    note.textContent = 'MQTT veza prekinuta';
+  if (state !== 'online') document.getElementById('mainBtn').disabled = true;
+}
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+function renderUserList() {
+  const el = document.getElementById('userList');
+  el.innerHTML = '';
+  for (const [name, data] of Object.entries(users)) {
+    const div = document.createElement('div');
+    div.className = 'user-item';
+    div.innerHTML = `
+      <span>
+        <span class="user-name">${name}</span>
+        <span class="user-role">${data.role || 'user'}</span>
+      </span>
+      <button class="user-del" onclick="deleteUser('${name}')" title="Obriši">×</button>
+    `;
+    el.appendChild(div);
+  }
+}
+
+async function addUser() {
+  const u = document.getElementById('newUser').value.trim();
+  const p = document.getElementById('newPass').value;
+  const r = document.getElementById('newRole').value;
+  const errEl = document.getElementById('adminErr');
+  const okEl  = document.getElementById('adminOk');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!u || !p) { errEl.textContent = 'Upiši korisničko ime i lozinku'; errEl.classList.add('show'); return; }
+  if (users[u]) { errEl.textContent = 'Korisnik već postoji'; errEl.classList.add('show'); return; }
+  const hash = await sha256(p);
+  users[u] = { hash, role: r };
+  localStorage.setItem('barrier_users', JSON.stringify(users));
+  document.getElementById('newUser').value = '';
+  document.getElementById('newPass').value = '';
+  okEl.textContent = `Korisnik "${u}" dodan. Spremi na GitHub.`;
+  okEl.classList.add('show');
+  renderUserList();
+}
+
+function deleteUser(name) {
+  const errEl = document.getElementById('adminErr');
+  const okEl  = document.getElementById('adminOk');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (name === currentUser) {
+    errEl.textContent = 'Ne možeš obrisati sebe!';
+    errEl.classList.add('show'); return;
+  }
+  delete users[name];
+  localStorage.setItem('barrier_users', JSON.stringify(users));
+  renderUserList();
+  okEl.textContent = `Korisnik "${name}" obrisan. Spremi na GitHub.`;
+  okEl.classList.add('show');
+}
+
+async function saveToGithub() {
+  const token = document.getElementById('ghToken').value.trim();
+  const okEl  = document.getElementById('adminOk');
+  const errEl = document.getElementById('adminErr');
+  okEl.classList.remove('show'); errEl.classList.remove('show');
+  if (!token) { errEl.textContent = 'Upiši GitHub token!'; errEl.classList.add('show'); return; }
+
+  const owner  = 'boriss2808';
+  const repo   = 'barijera_esp';
+  const path   = 'users.json';
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+  let sha = '';
+  try {
+    const r = await fetch(apiUrl, { headers: { 'Authorization': 'token ' + token } });
+    if (r.ok) { const d = await r.json(); sha = d.sha; }
+  } catch(e) {}
+
+  const json      = JSON.stringify(users, null, 2);
+  const content64 = btoa(unescape(encodeURIComponent(json)));
+  const body      = { message: 'Ažuriraj korisnike', content: content64 };
+  if (sha) body.sha = sha;
+
+  try {
+    const r = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
-    client.on('message', (topic, payload) => {
-      const msg = payload.toString();
-      if (topic === 'barijera/status' && ['OPEN','CLOSED','MOVING'].includes(msg)) {
-        state.barrier = msg;
-        state.moving = msg === 'MOVING';
-        render();
-        log(`MQTT status ← ${msg}`);
-      }
-    });
-    client.on('error', err => log(`MQTT greska: ${err.message}`, 'danger'));
-    client.on('close', () => els('connText').textContent = 'MQTT: nije spojeno');
-  };
+    if (r.ok) {
+      okEl.textContent = 'Uspješno spremljeno na GitHub!';
+      okEl.classList.add('show');
+      document.getElementById('ghToken').value = '';
+    } else {
+      const d = await r.json();
+      errEl.textContent = 'Greška: ' + (d.message || r.status);
+      errEl.classList.add('show');
+    }
+  } catch(e) {
+    errEl.textContent = 'Greška pri spajanju na GitHub.';
+    errEl.classList.add('show');
+  }
+}
 
-  els('disconnectBtn').onclick = () => {
-    if (state.client) state.client.end(true);
-    els('connText').textContent = 'MQTT: nije spojeno';
-    log('MQTT prekinut');
-  };
-  els('mainBtn').onclick = () => handleCommand(state.barrier === 'CLOSED' ? 'OTVORI' : 'ZATVORI');
-  els('toggleBtn').onclick = () => handleCommand('TOGGLE');
-  els('resetBtn').onclick = () => handleCommand('RESET_FAULT');
+// ── Auto-login ────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  await loadUsers();
+  const u = localStorage.getItem('barrier_user');
+  const h = localStorage.getItem('barrier_hash');
+  if (u && h && users[u] && users[u].hash === h) {
+    currentUser = u;
+    currentRole = users[u].role || 'user';
+    showApp();
+    connectMQTT();
+  }
+});
 
-  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-  render();
-  log('Pocetno stanje: CLOSED. Tipka je postavljena na OTVORI.');
-})();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
 </html>
