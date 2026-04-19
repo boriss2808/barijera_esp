@@ -3,8 +3,8 @@
     "hash": "937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244",
     "role": "admin"
   },
-  "a": {
-    "hash": "f55ff16f66f43360266b95db6f8fec01d76031054306ae4a4b380598f6cfd114",
-    "role": "admin"
+  "x": {
+    "hash": "ec31682fde561917952ff78a7a8adeffd0febc372dd26871916c46c630381b45",
+    "role": "user"
   }
 }
