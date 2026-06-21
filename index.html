@@ -308,6 +308,7 @@ const EMQX_HOST          = "xf131e86.ala.eu-central-1.emqxsl.com";
 const EMQX_PORT          = 8084;
 const TOPIC_CMD          = "barijera/komanda";
 const TOPIC_STATUS       = "barijera/status";
+const TOPIC_STATUS_JSON  = "barijera/status_json";
 const TOPIC_AVAILABILITY = "barijera/availability";
 const TOPIC_ALARM        = "barijera/alarm";
 const TOPIC_ACK          = "barijera/ack";
@@ -321,8 +322,9 @@ let client       = null;
 let currentUser  = null;
 let currentRole  = null;
 let barrierState = null;
+let barrierDirection = "NONE"; // "OPENING" | "CLOSING" | "NONE"
 let espAvailable = false;
-let lastCmdDir   = null; // 'open' | 'close'
+let lastCmdDir   = null; // fallback samo dok ne dođe status_json // 'open' | 'close'
 let users        = {};
 
 // ── Hash ──────────────────────────────────────────────────────────────────────
@@ -402,6 +404,7 @@ function connectMQTT() {
   client.on('connect', () => {
     setDot('online');
     client.subscribe(TOPIC_STATUS);
+    client.subscribe(TOPIC_STATUS_JSON);
     client.subscribe(TOPIC_AVAILABILITY);
     client.subscribe(TOPIC_ALARM);
     client.subscribe(TOPIC_ACK);
@@ -409,6 +412,7 @@ function connectMQTT() {
   client.on('message', (topic, payload) => {
     const msg = payload.toString();
     if (topic === TOPIC_STATUS)       handleStatus(msg);
+    if (topic === TOPIC_STATUS_JSON)  handleStatusJson(msg);
     if (topic === TOPIC_AVAILABILITY) handleAvailability(msg);
     if (topic === TOPIC_ALARM)        handleAlarm(msg);
     if (topic === TOPIC_ACK)          handleAck(msg);
@@ -420,13 +424,54 @@ function connectMQTT() {
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
 function handleStatus(status) {
+  // Stari topic je fallback i kompatibilnost.
+  // On NE nosi smjer, zato smjer ne smije određivati animaciju ako postoji status_json.
   if (status !== barrierState) {
     if (status === 'OPEN')   simLog('Status: BARIJERA OTVORENA', 'sim-ok');
     if (status === 'CLOSED') simLog('Status: BARIJERA ZATVORENA', 'sim-ok');
     if (status === 'MOVING') simLog('Status: U POKRETU...', 'sim-move');
   }
+
   barrierState = status;
+
+  // Kad više nije MOVING, obavezno očisti smjer i lokalnu zadnju komandu.
+  // Ovo sprječava bug gdje prethodni korisnik vidi krivu animaciju.
+  if (status !== 'MOVING') {
+    barrierDirection = 'NONE';
+    lastCmdDir = null;
+  }
+
   updateUI();
+}
+
+function handleStatusJson(msg) {
+  try {
+    const data = JSON.parse(msg);
+    if (!data || !data.state) return;
+
+    const newState = data.state;
+    const newDirection = data.direction || 'NONE';
+
+    if (newState !== barrierState) {
+      if (newState === 'OPEN')   simLog('Status JSON: BARIJERA OTVORENA', 'sim-ok');
+      if (newState === 'CLOSED') simLog('Status JSON: BARIJERA ZATVORENA', 'sim-ok');
+      if (newState === 'MOVING') simLog('Status JSON: U POKRETU ' + newDirection, 'sim-move');
+    }
+
+    barrierState = newState;
+    barrierDirection = newDirection;
+
+    // MQTT status_json je izvor istine za sve klijente.
+    // Lokalni klik smije biti samo fallback dok status_json ne stigne.
+    if (barrierState !== 'MOVING') {
+      barrierDirection = 'NONE';
+      lastCmdDir = null;
+    }
+
+    updateUI();
+  } catch(e) {
+    simLog('Neispravan status_json: ' + msg, 'sim-info');
+  }
 }
 
 function handleAvailability(msg) {
@@ -461,7 +506,7 @@ function handleClick() {
 
   const cmd = barrierState === 'OPEN' ? 'ZATVORI' : 'OTVORI';
   lastCmdDir = cmd === 'ZATVORI' ? 'close' : 'open';
-  client.publish(TOPIC_CMD, cmd, { qos: 1 });
+  client.publish(TOPIC_CMD, cmd, { qos: 1, retain: false });
 
   const now = new Date();
   const ts  = now.toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' });
@@ -481,7 +526,7 @@ function handleClick() {
 
 function sendResetFault() {
   if (!client || currentRole !== 'admin') return;
-  client.publish(TOPIC_CMD, 'RESET_FAULT', { qos: 1 });
+  client.publish(TOPIC_CMD, 'RESET_FAULT', { qos: 1, retain: false });
   document.getElementById('alarmBanner').classList.remove('show');
 }
 
@@ -529,12 +574,21 @@ function updateUI() {
 
   } else if (barrierState === 'MOVING') {
     btn.classList.add('state-moving'); btn.disabled = true;
-    const goingUp = lastCmdDir === 'close';
+
+    // Izvor istine je MQTT status_json:
+    // OPENING = lanac se spušta, CLOSING = lanac se podiže.
+    // lastCmdDir ostaje samo fallback za jako kratak trenutak prije dolaska status_json.
+    let goingUp = false;
+    if (barrierDirection === 'CLOSING') goingUp = true;
+    else if (barrierDirection === 'OPENING') goingUp = false;
+    else goingUp = lastCmdDir === 'close';
+
     arrow.className = goingUp ? 'arrow moving-up' : 'arrow moving-down';
     arrow.textContent = goingUp ? '↑' : '↓';
     label.className = 'btn-label moving';
     label.textContent = goingUp ? 'LANAC SE PODIŽE' : 'LANAC SE SPUŠTA';
-    status.className = 'status-text moving'; status.textContent = 'U POKRETU...';
+    status.className = 'status-text moving';
+    status.textContent = goingUp ? 'ZATVARANJE...' : 'OTVARANJE...';
     ring.className = 'ring-fg moving'; ring.style.strokeDasharray = '377 754';
 
   } else if (barrierState === 'FAULT') {
