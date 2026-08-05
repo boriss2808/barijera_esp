@@ -22,5 +22,9 @@
   "Barbara": {
     "hash": "2b93856769d22bcb51b4b427134b5e415b947cae25eb1c249239d8d8bf945e11",
     "role": "user"
+  },
+  "Suada": {
+    "hash": "352b6c1bbebd88b79e766f6be229c051d1ac8654c94b32a6cda47341a8e270a1",
+    "role": "user"
   }
 }
