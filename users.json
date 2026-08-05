@@ -6,5 +6,9 @@
   "Ante": {
     "hash": "42f54e12a911fb88be510255c6496aae459ffa62436b2da074c9adda9d452a51",
     "role": "admin"
+  },
+  "Mila": {
+    "hash": "42f54e12a911fb88be510255c6496aae459ffa62436b2da074c9adda9d452a51",
+    "role": "admin"
   }
 }
