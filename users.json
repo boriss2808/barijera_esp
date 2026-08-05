@@ -3,18 +3,6 @@
     "hash": "937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244",
     "role": "admin"
   },
-  "prvi": {
-    "hash": "f64551fcd6f07823cb87971cfb91446425da18286b3ab1ef935e0cbd7a69f68a",
-    "role": "user"
-  },
-  "drugi": {
-    "hash": "e788103ee15318fcd2af9b73b4ebbb33a903b020de7b307d71f5fed0f433e548",
-    "role": "user"
-  },
-  "treci": {
-    "hash": "cece8a9cecfb6c7e7ee4f3346d5e2544138bfb6e33bec6042a17333a4d3180b0",
-    "role": "user"
-  },
   "Ante": {
     "hash": "42f54e12a911fb88be510255c6496aae459ffa62436b2da074c9adda9d452a51",
     "role": "admin"
