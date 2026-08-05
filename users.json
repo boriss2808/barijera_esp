@@ -18,5 +18,9 @@
   "Boris": {
     "hash": "42f54e12a911fb88be510255c6496aae459ffa62436b2da074c9adda9d452a51",
     "role": "admin"
+  },
+  "Barbara": {
+    "hash": "bfa605083ee5109906319595e72cbbe115f7a503d3fdd7514c584f74fa8432ba",
+    "role": "user"
   }
 }
