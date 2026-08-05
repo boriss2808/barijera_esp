@@ -14,5 +14,9 @@
   "treci": {
     "hash": "cece8a9cecfb6c7e7ee4f3346d5e2544138bfb6e33bec6042a17333a4d3180b0",
     "role": "user"
+  },
+  "Ante": {
+    "hash": "42f54e12a911fb88be510255c6496aae459ffa62436b2da074c9adda9d452a51",
+    "role": "admin"
   }
 }
