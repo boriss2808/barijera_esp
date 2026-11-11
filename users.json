@@ -26,5 +26,9 @@
   "Suada": {
     "hash": "352b6c1bbebd88b79e766f6be229c051d1ac8654c94b32a6cda47341a8e270a1",
     "role": "user"
+  },
+  "Pribudic-Borcic": {
+    "hash": "7c8ab91c6e3e5283c478f17b654fa99715323bda3c1dde05c87bb367e1899752",
+    "role": "user"
   }
 }
